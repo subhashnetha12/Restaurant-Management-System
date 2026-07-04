@@ -1,0 +1,934 @@
+{% extends "Staff/base.html" %}
+
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Orders</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        .item-section{
+            width: 45%;
+            margin-left: -30px;
+        }
+        .selected-section{
+            width: 50%;
+            margin-right: -30px;
+        }
+        .menu-item img {
+            width: 100%;
+            height: 130px; /* Reduced height */
+            object-fit: cover;
+            border-radius: 8px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .menu-item img:hover {
+            transform: scale(1.05);
+        }
+
+        .card {
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .select-container {
+            position: relative;
+        }
+
+        .select-container label {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            font-size: 14px;
+            font-weight: bold;
+            color: #000000;
+            pointer-events: none;
+        }
+
+        .select-container .form-select {
+            padding-left: 45px;
+            font-size: 14px;
+            height: 30px;
+        }
+
+        .quantity-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px 10px;
+            width: 100%;
+            background: white;
+        }
+
+        .quantity-btn {
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #5a5a5a;
+        }
+
+        .quantity-btn:disabled {
+            color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            background: transparent;
+        }
+
+        .btn-primary {
+            font-size: 12px;
+            padding: 5px 8px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 0.5;
+            }
+        }
+
+        #menuItems {
+            height: 70vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        #orderListContainer {
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #orderListContainer table {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            table-layout: fixed;
+            width: 100%;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        #orderListContainer th {
+            background: #bebebe;
+            color: #282828;
+            text-align: left;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100px; 
+        }
+
+        #orderListContainer td {
+            text-align: left;
+            vertical-align: middle;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100px; 
+        }
+
+        #orderListContainer h6 {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .table .form-control,.form-select{
+            border: none;
+            padding: 5px 5px 5px 10px;
+        }
+        .table .form-control:focus,.form-select:focus{
+            border: none;
+            box-shadow: none;
+        }
+
+        .btn-group{
+            border: solid 1px black;
+         }
+         :root{
+            --dark-text: 61, 61, 61;
+            --content-color: 116, 116, 116;
+            --dashed-line: 232, 232, 232;
+            --theme-color: 242, 169, 62;
+            --theme-color2: 240, 112, 84;
+        }
+        .btn-payment {
+            background-color: transparent;
+            font-weight: bold;
+        }
+        .order-link{
+            color: orange;
+        }
+        .table td, .table th {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .order-detail {
+            color: rgb(39, 125, 42);
+            font-weight: bold;
+            font-size: 1.0rem; /* Adjust for better visibility */
+        }
+        .order-label,
+        .table-label{
+            font-weight: 600;
+            font-size: 20px;
+        }
+        .order-content h5 {
+            color: rgba(var(--dark-text), 1);
+            font-weight: 600;
+            max-width: 80%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-size: calc(16px + 2*(100vw - 320px) / 1600);
+        }
+        #order_title,
+        #order_qty_title,
+        #order_base_title,
+        #order_price_title{
+            font-weight: 600;
+            font-size: medium;
+        }
+        .order-price,
+        .order-qty,
+        .order-title {
+            font-weight: 400;
+            color: rgba(var(--dark-text), 1);
+            font-size: calc(16px + 4*(100vw - 320px) / 1600);
+        }
+        .order-size {
+            font-size: calc(14px + 2*(100vw - 320px) / 1600);
+            font-weight: 400;
+            color: rgba(var(--content-color), 1);
+        }
+        .order-content .d-flex {
+            display: flex;
+            justify-content: space-between;
+            gap: 40px; /* Adjust spacing */
+            width: 100%;
+        }
+        .order-name {
+            flex: 2;  /* Gives more space to the name */
+            text-align: left; /* Aligns the name to the left */
+        }
+        .order-qty,
+        .order-price {
+            flex: 1; /* Keeps quantity and price equally spaced */
+            text-align: center;
+        }
+        .checkout-detail li + li {
+            border-top: 1px solid rgba(var(--dashed-line), 1);
+            padding-top: 10px;
+            margin-top: 6px;
+        }
+        .checkout-detail h5 {
+            font-weight: 400;
+            font-size: calc(15px + 5*(100vw - 320px) / 1600);
+            line-height: 1.5;
+            margin-bottom: 0;
+            color: rgba(var(--dark-text), 1) !important;
+        }
+        .checkout-detail .grand-total {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: calc(5px + 5*(100vw - 991px) / 929);
+            border-top: 1px solid rgba(var(--dark-text), 0.15);
+            padding: 10px 0 0;
+        }
+        .content-color {
+            color: rgba(var(--content-color), 1) !important;
+        }
+        .checkout-detail .grand-total h6 {
+            color: rgba(var(--dark-text), 1);
+            font-size: calc(16px + 4*(100vw - 320px) / 1600);
+        }
+        .amount-word {
+            padding: 10px 0 0;
+            color: rgba(var(--dark-text), 1);
+            font-weight: 600;
+        }
+
+        .restaurant-btn {
+            padding: calc(10px + 5*(100vw - 320px) / 1600) 0;
+            margin-top: calc(10px + 20*(100vw - 320px) / 1600);
+            text-transform: uppercase;
+        }
+        .theme-btn {
+            color: #fff;
+            background-color: rgba(var(--theme-color), 1);
+            border-radius: 4px;
+            background: linear-gradient(to right, rgba(var(--theme-color), 1), rgba(var(--theme-color2), 1));
+            border: none;
+            border-radius: 100px;
+        }
+        .theme-btn:active{
+            color: #fff;
+            background-color: rgba(var(--theme-color), 1);
+            border-radius: 4px;
+            background: linear-gradient(to right, rgba(var(--theme-color), 1), rgba(var(--theme-color2), 1));
+        }
+        #modalTotal {
+            padding-left: 20px; /* Adjust the negative value to move left */
+        }
+        .container-custom {
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 100px auto auto auto;
+        }
+        /* Modal styles */
+        .modal-header {
+            padding: 0.5rem 1rem;
+            background-color: #F07054;
+            color: #ffff;
+        }
+
+        .modal-body {
+            padding-top: 25px;
+            border: 1px solid #dbdbdb;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .modal-title {
+            font-weight: bold;
+        }
+        #modal_container{
+            margin-left: -180px;
+        }
+
+        .item-name{
+            font-size: 15px;
+        }
+
+        .card-body{
+            padding-top:5px;
+            padding-bottom: 5px;
+            padding-left: -50px !important;
+            padding-right: -50px !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-4">
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+
+        <div class="row">        
+            <div class="col-md-5 selected-section d-flex flex-column">
+
+                {% if active_orders.order_type == 'Dine-In' %}
+                    <h4 class="mb-3">Adding items On <strong>{{ active_orders.table_no }}</strong></h4>
+
+                    <div class="row align-items-center mb-3">
+                        <div class="col-auto">
+                            <label for="available_tables" class="form-label fw-bold mb-0">Shift to Table:</label>
+                        </div>
+                        <div class="col">
+                            <select id="available_tables" class="form-select">
+                                <option value="" selected disabled>Select Table</option>
+                                {% for table in available_tables %}
+                                    <option value="{{ table.table_no }}">{{ table.table_no }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary" onclick="shiftTable('{{ active_orders.order_no }}')">
+                                Confirm Shift
+                            </button>
+                        </div>
+                    </div>
+                {% elif active_orders.order_type == 'Takeaway' %}
+                    <h4 class="mb-3">Adding items On Takeaway <strong>{{ active_orders.order_no }}</strong></h4>
+                {% endif %}
+
+                <form action="" method="post" class="flex-grow-1">
+                    {% csrf_token %}
+
+                    <input type="number" name="no_of_rows" id="no_of_rows" hidden>
+            
+                    <h4 class="mb-3">Selected Items</h4>
+                    <div id="orderListContainer">
+                        <table class="table table-bordered mb-2">
+                            <thead>
+                                <tr>
+                                    <th style="width: 45%;">Item</th>
+                                    <th style="width: 19%;">Qty</th>
+                                    <th style="width: 20%;">Price(Rs)</th>
+                                    <th style="width: 16%;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderTableBody">
+                                {% for i in active_orders_details %}
+                                    {% if active_orders.order_no == i.order_no %}
+                                    <tr id="{{ forloop.counter }}" class="item-row">
+                                        <td>            
+                                            {{ i.menu_item }} ({{ i.size }})         
+                                            <input type="text" name="item_name_{{ forloop.counter }}" value="{{ i.menu_item }}" hidden>
+                                            <input type="text" name="item_size_{{ forloop.counter }}" value="{{ i.size }}" hidden>
+                                        </td> 
+                                        <td>
+                                            <input type="number" name="qty_{{ forloop.counter }}" id="qty-{{ forloop.counter }}" 
+                                                {% if active_orders.status == 'Served' %}  min="{{ i.quantity }}"{% else %} min="1" {% endif %}
+                                                class="form-control text-center" value="{{ i.quantity }}"  
+                                                onchange="updateQuantity('{{ forloop.counter }}')">
+                                        </td>
+
+
+                                        <td>
+                                            <span id="price-{{ forloop.counter }}">{{ i.price|floatformat:2 }}</span>
+                                            <input type="number" id="price_{{ forloop.counter }}" name="price_{{ forloop.counter }}" value="{{ i.price }}" hidden>
+                                        
+                                            {% with loop_counter=forloop.counter %}
+                                                {% for detail in menuitems_det %}
+                                                    {% if detail.name == i.menu_item and detail.size == i.size %}
+
+                                                        {% if active_orders.order_type == "Dine-In" %}
+                                                            <input type="number" id="base_price-{{ loop_counter }}" name="base_price_{{ loop_counter }}"
+                                                                value="{{ detail.table_price }}" hidden>
+                                                        {% endif %}
+                                                        
+                                                        {% if active_orders.order_type == "Takeaway" %}
+                                                            <input type="number" id="base_price-{{ loop_counter }}" name="base_price_{{ loop_counter }}"
+                                                                value="{{ detail.takeaway_price }}" hidden>
+                                                        {% endif %}
+                                                        
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endwith %}
+                                        </td>                                        
+                                        
+                                        
+                                        <td>
+                                            {% if active_orders.status != 'Served' %}
+                                                <button class="btn btn-sm btn-danger" type="button" onclick="removeFromOrder('{{ forloop.counter }}')">x</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+            
+                    <h6>Total Price: Rs.<span id="totalPriceDisplay">{{ active_orders.total_amount }}</span></h6>
+                    <input type="number" name="totalPrice" id="totalPriceInput" value="{{ active_orders.total_amount }}" hidden>
+            
+                    <button class="btn btn-success mt-3 w-100" type="submit">Add More Items</button>
+                </form>
+            
+                {% if active_orders.status == 'Served' %}
+                <div class="mt-auto text-end">
+                    <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#paymentModal-{{ active_orders.order_no }}">
+                        <i class="fas fa-credit-card"></i> Payment
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+
+            <!-- Vertical Divider -->
+            <div class="col-md-1 d-flex align-items-center justify-content-center">
+                <div class="vr" style="height: 100%; width: 2px; background-color: #ccc;"></div>
+            </div>
+                         
+            <div class="col-md-6 item-section">
+                <div class="d-flex mb-3 p-2">
+                    <input type="text" id="searchMenu" class="form-control me-2" placeholder="Search menu items..." onkeyup="filterMenu()">
+                    
+                    <select id="categoryFilter" class="form-select me-2" onchange="filterMenu()">
+                        <option value="">All Categories</option>
+                        {% for category in cat_det %}
+                        <option value="{{ category.name }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                
+                    <select id="typeFilter" class="form-select" onchange="filterMenu()">
+                        <option value="">All Types</option>
+                        <option value="Veg">Veg</option>
+                        <option value="Non-Veg">Non-Veg</option>
+                    </select>
+                </div>
+            
+                <h4 class="mb-3">Menu Items</h4>
+            
+                <div id="menuItems">
+                    {% for category in cat_det %}
+                    <h5 class="category-title">{{ category.name }}</h5>
+                    <div class="row row-cols-1 row-cols-md-3 g-2 mb-3">
+                        {% for item in all_menuitems %}
+                            {% if item.category == category.name %}
+                            <div class="col menu-item" data-category="{{ item.category }}" data-type="{{ item.type }}">
+                                <div class="card p-2">
+                                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}">
+                                    <div class="card-body text-center abcd">
+                                        <h6 class="mb-1 item-name"><strong>{{ item.name }}</strong></h6>
+                                        <p class="mb-0">Price: Rs. <span id="mt_price_{{forloop.counter}}"></span></p>   
+                                        <input type="text" id="mt_item_name_{{forloop.counter}}" value="{{item.name}}" hidden>                             
+                                        <input type="number" id="mt_price2_{{forloop.counter}}" hidden>                             
+                                    </div>                                
+                                    <div class="select-container mb-1">
+                                        <label class="fw-bold" for="size_{{forloop.counter}}">Size:</label>
+                                        <select class="form-select form-select-sm size-dropdown" style="border:1px solid #d0d0d0;" 
+                                                id="mt_size_{{forloop.counter}}" 
+                                                data-input-target="mt_price2_{{forloop.counter}}" 
+                                                data-price-target="mt_price_{{forloop.counter}}" 
+                                                data-order-type="{{ active_orders.order_type }}" 
+                                                onchange="updatePrice('{{forloop.counter}}')">
+                                            
+                                            {% for detail in menuitems_det %}
+                                                {% if detail.name == item.name %}
+                                                    <option value="{{ detail.table_price }}" 
+                                                            data-size="{{ detail.size }}" 
+                                                            data-table-price="{{ detail.table_price }}" 
+                                                            data-takeaway-price="{{ detail.takeaway_price }}">
+                                                        {{ detail.size }}
+                                                    </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>                            
+                                    <div class="quantity-container mb-1">
+                                        <label class="fw-bold">Qty:</label>
+                                        <button class="quantity-btn" onclick="decreaseQuantity('{{forloop.counter}}')">-</button>
+                                        <input type="number" class="quantity-input" id="mt_qty_{{forloop.counter}}" value="1" min="1" readonly>
+                                        <button class="quantity-btn" onclick="increaseQuantity('{{forloop.counter}}')">+</button>
+                                    </div>
+                                                            
+                                    <button class="btn btn-primary" onclick="addToOrder('{{forloop.counter}}')">Add</button>                            
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>                             
+            </div>
+            
+        </div>
+    </div>
+    
+    <div class="modal fade" id="paymentModal-{{ active_orders.order_no }}" tabindex="-1" aria-labelledby="paymentModalLabel-{{ active_orders.order_no }}" aria-hidden="true" data-bs-backdrop="true" >
+        <div class="modal-dialog modal-lg" >
+            <div class="modal-content container-custom">
+                <!-- Modal Header -->
+                <div class="modal-header"> 
+                    <h3 class="fw-semibold dark-text checkout-title">Order Summery</h3>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="paymentForm" method="post" action="#">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-lg-7 col-sm-12 order-label">
+                                <label class="fw-semibold">Order No:</label>
+                                <span class="order-detail" id="modalOrderNo">{{ active_orders.order_no }}</span>  <!-- Dynamic Order No -->
+                            </div>
+                            <div class="col-lg-5 col-sm-12 table-label">
+                                <label class="fw-semibold">Table No:</label>
+                                <span class="order-detail" id="modalTableNo">{{ active_orders.table_no }}</span>  <!-- Dynamic Table No -->
+                            </div>
+                        </div>
+                        
+                        <div class="order-summery-section sticky-top">
+                            <div class="checkout-detail">
+                                <ul>
+                                    <li>
+                                        <div class="horizontal-product-box">
+                                            <div class="order-content">
+                                                <div class="d-flex text-center">
+                                                    <h5 class="order-name" id="order_title">Order Name</h5>
+                                                    <h6 class="order-qty" id="order_qty_title">Quantity</h6>
+                                                    <h6 class="order-price" id="order_base_title"> Unit Price</h6>
+                                                    <h6 class="order-price" id="order_price_title"> Price</h6>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    {% for i in active_orders_details %}
+                                        {% if active_orders.order_no == i.order_no %}
+                                            <li>
+                                                <div class="horizontal-product-box">
+                                                    <div class="order-content">
+                                                        <div class="d-flex text-center">
+                                                            <h5 class="order-name" id="order-name_{{ forloop.counter }}">{{ i.menu_item }}</h5>
+                                                            <h6 class="order-qty" id="modalQty_{{ forloop.counter }}">{{ i.quantity }}</h6>
+                                                            <h6 class="order-price" id="base_price_{{ forloop.counter }}">{{ i.base_price }}</h6>
+                                                            <h6 class="order-price" id="total_price_{{ forloop.counter }}">{{ i.price }}</h6>
+                                                        </div>
+                                                        <h6 class="order-size" id="order_size_{{ forloop.counter }}">{{ i.size }}</h6>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                                
+                                <h5 class="fw-semibold dark-text pt-3 pb-3">Bill Details</h5>
+                                <div class="grand-total">
+                                    <h6 class="fw-semibold dark-text">Total</h6>
+                                    <h6 class="fw-semibold dark-text"></h6>
+                                    <h6 class="fw-semibold dark-text"></h6>
+                                    <h6 class="fw-semibold amount" id="modalTotal">{{active_orders.total_amount}}</h6>
+                                </div>
+                                <div class="amount-word">
+                                    <h6 class="fw-semibold dark-text">{{ active_orders.amount_in_words }}</h6>
+                                </div>
+                                <a href="{% url 'order_invoice' active_orders.order_no %}" class="btn theme-btn restaurant-btn w-100 rounded-2" target="_blank" rel="noopener noreferrer">PAY NOW</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const payNowButtons = document.querySelectorAll(".restaurant-btn");
+
+            payNowButtons.forEach(button => {
+                button.addEventListener("click", function (event) {
+                    event.preventDefault(); 
+                    const url = this.href; 
+                    
+                    window.open(url, "_blank");
+
+                    setTimeout(() => {
+                        window.location.href = "/staff_dashboard"; // Change this URL to your desired redirect page
+                    }, 1000); 
+                });
+            });
+        });
+    </script>
+
+    <script>
+      function shiftTable(orderNo) {
+    let selectedTable = document.getElementById("available_tables").value;
+    
+    if (!selectedTable) {
+        alert("Please select a table before shifting.");
+        return;
+    }
+
+    let csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch(`/shift_table/${orderNo}/${encodeURIComponent(selectedTable)}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": csrftoken,
+            "Content-Type": "application/json"
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();  // Reload the page to display Django messages
+        } else {
+            location.reload();  // Even on failure, reload to show Django error messages
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        location.reload();  // Reload to show Django messages if there's an error
+    });
+}
+
+
+    </script>
+    
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'error' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                var errorAlertElement = document.getElementById('floating-alert-error');
+                var errorMessage = document.getElementById('floating-alert-error-message');
+                errorMessage.textContent = "{{ message|safe }}";
+                errorAlertElement.style.display = 'block';
+                errorAlertElement.classList.add('show');
+
+                setTimeout(function () {
+                    errorAlertElement.classList.remove('show');
+                    errorAlertElement.style.display = 'none';
+                }, 3000); // 2 seconds delay for success alert
+                });                                        
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+
+    <script>
+
+        function updateRowCount() {
+            let rowCount = document.querySelectorAll(".item-row").length;
+            document.getElementById("no_of_rows").value = rowCount;
+        }
+
+
+        function updatePrice(row_no) {
+            let dropdown = document.getElementById(`mt_size_${row_no}`);
+            let priceTarget = document.getElementById(`mt_price_${row_no}`);
+            let priceTargetInput = document.getElementById(`mt_price2_${row_no}`);
+            let orderType = dropdown.getAttribute("data-order-type");
+
+            if (dropdown && priceTarget) {
+                let selectedOption = dropdown.options[dropdown.selectedIndex];
+
+                let price;
+                if (orderType === "Dine-In") {
+                    price = selectedOption.getAttribute("data-table-price");
+                } else if (orderType === "Takeaway") {
+                    price = selectedOption.getAttribute("data-takeaway-price");
+                }
+
+                priceTarget.textContent = parseFloat(price).toFixed(2);
+                priceTargetInput.value = parseFloat(price);
+            }
+        }
+
+        // Initialize prices on page load
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".size-dropdown").forEach(function (dropdown) {
+                let priceTargetId = dropdown.getAttribute("data-price-target");
+                let priceTarget = document.getElementById(priceTargetId);
+                let priceTargetInput = document.getElementById(dropdown.getAttribute("data-input-target"));
+                let orderType = dropdown.getAttribute("data-order-type");
+
+                if (dropdown.options.length > 0) {
+                    let selectedOption = dropdown.options[0];
+                    let price = orderType === "Dine-In" ? selectedOption.getAttribute("data-table-price") : selectedOption.getAttribute("data-takeaway-price");
+
+                    priceTarget.textContent = parseFloat(price).toFixed(2);
+                    priceTargetInput.value = parseFloat(price);
+                }
+
+                dropdown.addEventListener("change", function () {
+                    updatePrice(this.id.split("_")[2]); // Extract row number from ID
+                });
+            });
+        });
+
+
+        function increaseQuantity(row_no) {
+            let input = document.getElementById(`mt_qty_${row_no}`);
+            input.value = parseInt(input.value) + 1;
+        }
+
+        function decreaseQuantity(row_no) {
+            let input = document.getElementById(`mt_qty_${row_no}`);
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+
+
+        function updateQuantity(row_no) {
+            let qtyInput = document.getElementById(`qty-${row_no}`);
+            let priceElement = document.getElementById(`price-${row_no}`);
+            let priceInput = document.getElementById(`price_${row_no}`);
+            let basePriceInput = document.getElementById(`base_price-${row_no}`);
+
+            if (!qtyInput || !priceElement || !priceInput || !basePriceInput) return;
+
+            let basePrice = parseFloat(basePriceInput.value) || 0;
+            let quantity = parseInt(qtyInput.value) || 1;
+
+            let newPrice = basePrice * quantity;
+            priceElement.textContent = newPrice.toFixed(2);
+            priceInput.value = newPrice.toFixed(2);
+
+            recalculateTotal();
+        }
+
+        function recalculateTotal() {
+            let totalPrice = 0;
+            document.querySelectorAll("input[type='number'][id^='price_']").forEach(input => {
+                totalPrice += parseFloat(input.value) || 0;
+            });
+            document.getElementById("totalPriceDisplay").textContent = totalPrice.toFixed(2);
+            document.getElementById("totalPriceInput").value = totalPrice.toFixed(2);
+        }
+
+        function initializeOrderItems() {
+            orderItems = {};
+            document.querySelectorAll("#orderTableBody tr").forEach(row => {
+                let itemKey = row.id;
+                let nameInput = row.querySelector("input[name^='item_name_']");
+                let sizeInput = row.querySelector("input[name^='item_size_']");
+                if (!nameInput || !sizeInput) return;
+                orderItems[itemKey] = { name: nameInput.value, size: sizeInput.value };
+            });
+            updateRowCount();
+            recalculateTotal();
+        }
+
+        function findOrderKey(itemName, itemSize) {
+            return Object.keys(orderItems).find(key => orderItems[key].name === itemName && orderItems[key].size === itemSize) || null;
+        }
+
+        function addToOrder(row_no) {
+            let item_name = document.getElementById(`mt_item_name_${row_no}`);
+            let item_size = document.getElementById(`mt_size_${row_no}`);
+            let item_qty = document.getElementById(`mt_qty_${row_no}`);
+            let item_price = document.getElementById(`mt_price2_${row_no}`);
+
+            if (!item_name || !item_size || !item_qty || !item_price) return;
+
+            let sizeValue = item_size.options[item_size.selectedIndex].dataset.size;
+            let itemKey = findOrderKey(item_name.value, sizeValue);
+
+            if (itemKey) {
+                let qtyInput = document.getElementById(`qty-${itemKey}`);
+                qtyInput.value = parseInt(qtyInput.value) + parseInt(item_qty.value);
+                updateQuantity(itemKey);
+            } else {
+                let orderTableBody = document.getElementById("orderTableBody");
+                let price = parseFloat(item_price.value) * parseInt(item_qty.value);
+                let rowCount = document.querySelectorAll(".item-row").length + 1;
+
+                let row = document.createElement("tr");
+                row.id = rowCount;
+                row.classList.add("item-row");
+                row.innerHTML = `
+                    <td>${item_name.value} (${sizeValue})
+                        <input type="hidden" name="item_name_${rowCount}" value="${item_name.value}">
+                        <input type="hidden" name="item_size_${rowCount}" value="${sizeValue}">
+                    </td>
+                    <td>
+                        <input type="number" id="qty-${rowCount}" name="qty_${rowCount}" class="form-control text-center" value="${item_qty.value}" min="1" onchange="updateQuantity('${rowCount}')">
+                    </td>
+                    <td>
+                        <span id="price-${rowCount}">${price.toFixed(2)}</span>
+                        <input type="hidden" id="price_${rowCount}" name="price_${rowCount}" value="${price}">
+                        <input type="hidden" id="base_price-${rowCount}" name="base_price_${rowCount}" value="${item_price.value}">
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" type="button" onclick="removeFromOrder('${rowCount}')">x</button>
+                    </td>
+                `;
+                orderTableBody.appendChild(row);
+                orderItems[rowCount] = { name: item_name.value, size: sizeValue };
+                updateRowCount();
+            }
+            recalculateTotal();
+        }
+
+        function removeFromOrder(itemKey) {
+            let item = document.getElementById(itemKey);
+            if (item) {
+                item.remove();
+                delete orderItems[itemKey];
+
+                // Recalculate total price
+                recalculateTotal();
+
+                // Update row IDs sequentially
+                let rows = document.querySelectorAll(".item-row");
+                rows.forEach((row, index) => {
+                    let newIndex = index + 1;
+                    row.id = newIndex;
+
+                    // Update input IDs and names inside the row
+                    row.querySelectorAll("input").forEach(input => {
+                        if (input.name.startsWith("item_name_")) {
+                            input.name = `item_name_${newIndex}`;
+                        } else if (input.name.startsWith("item_size_")) {
+                            input.name = `item_size_${newIndex}`;
+                        } else if (input.name.startsWith("qty_")) {
+                            input.name = `qty_${newIndex}`;
+                            input.id = `qty-${newIndex}`;
+                            input.setAttribute("onchange", `updateQuantity('${newIndex}')`);
+                        } else if (input.name.startsWith("price_")) {
+                            input.name = `price_${newIndex}`;
+                            input.id = `price_${newIndex}`;
+                        } else if (input.name.startsWith("base_price_")) {
+                            input.name = `base_price_${newIndex}`;
+                            input.id = `base_price-${newIndex}`;
+                        }
+                    });
+
+                    // Update displayed price span ID
+                    let priceSpan = row.querySelector("span[id^='price-']");
+                    if (priceSpan) {
+                        priceSpan.id = `price-${newIndex}`;
+                    }
+
+                    // Update remove button onclick function
+                    let removeBtn = row.querySelector("button");
+                    if (removeBtn) {
+                        removeBtn.setAttribute("onclick", `removeFromOrder('${newIndex}')`);
+                    }
+                });
+
+                updateRowCount();
+            }
+        }
+
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initializeOrderItems();  
+            
+        });
+
+    </script>
+    
+</body>
+
+</html>
+
+{% endblock content %}

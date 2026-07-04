@@ -1,0 +1,288 @@
+{% extends "Staff/base.html" %}
+
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>{% block title %}bill Generate{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'super_admin/css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        :root{
+            --dark-text: 61, 61, 61;
+            --content-color: 116, 116, 116;
+            --dashed-line: 232, 232, 232;
+            --theme-color: 242, 169, 62;
+            --theme-color2: 240, 112, 84;
+        }
+        .btn-payment {
+            background-color: #F07054;
+            font-weight: bold;
+        }
+        .btn {
+    display: inline-block !important;
+}
+        .table td, .table th {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .order-detail {
+            color: rgb(39, 125, 42);
+            font-weight: bold;
+            font-size: 1.0rem; /* Adjust for better visibility */
+        }
+        .order-label,
+        .table-label{
+            font-weight: 600;
+            font-size: 20px;
+        }
+        .order-content h5 {
+            color: rgba(var(--dark-text), 1);
+            font-weight: 600;
+            max-width: 80%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-size: calc(16px + 2*(100vw - 320px) / 1600);
+        }
+        #order_title,
+        #order_qty_title,
+        #order_base_title,
+        #order_price_title{
+            font-weight: 600;
+        }
+        .order-price,
+        .order-qty,
+        .order-title {
+            font-weight: 400;
+            color: rgba(var(--dark-text), 1);
+            font-size: calc(16px + 4*(100vw - 320px) / 1600);
+        }
+        .order-size {
+            font-size: calc(14px + 2*(100vw - 320px) / 1600);
+            font-weight: 400;
+            color: rgba(var(--content-color), 1);
+        }
+        .order-content .d-flex {
+            display: flex;
+            justify-content: space-between;
+            gap: 40px; /* Adjust spacing */
+            width: 100%;
+        }
+        .order-name {
+            flex: 2;  /* Gives more space to the name */
+            text-align: left; /* Aligns the name to the left */
+        }
+        .order-qty,
+        .order-price {
+            flex: 1; /* Keeps quantity and price equally spaced */
+            text-align: center;
+        }
+        .checkout-detail li + li {
+            border-top: 1px solid rgba(var(--dashed-line), 1);
+            padding-top: 10px;
+            margin-top: 6px;
+        }
+        .checkout-detail h5 {
+            font-weight: 400;
+            font-size: calc(15px + 5*(100vw - 320px) / 1600);
+            line-height: 1.5;
+            margin-bottom: 0;
+            color: rgba(var(--dark-text), 1) !important;
+        }
+        .checkout-detail .grand-total {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: calc(5px + 5*(100vw - 991px) / 929);
+            border-top: 1px solid rgba(var(--dark-text), 0.15);
+            padding: 10px 0 0;
+        }
+        .content-color {
+            color: rgba(var(--content-color), 1) !important;
+        }
+        .checkout-detail .grand-total h6 {
+            color: rgba(var(--dark-text), 1);
+            font-size: calc(16px + 4*(100vw - 320px) / 1600);
+        }
+        .amount-word {
+            padding: 10px 0 0;
+            color: rgba(var(--dark-text), 1);
+            font-weight: 600;
+        }
+
+        .restaurant-btn {
+            padding: calc(10px + 5*(100vw - 320px) / 1600) 0;
+            margin-top: calc(10px + 20*(100vw - 320px) / 1600);
+            text-transform: uppercase;
+        }
+        .theme-btn {
+            color: #fff;
+            background-color: rgba(var(--theme-color), 1);
+            border-radius: 4px;
+            background: linear-gradient(to right, rgba(var(--theme-color), 1), rgba(var(--theme-color2), 1));
+            border: none;
+            border-radius: 100px;
+        }
+        .theme-btn:active{
+            color: #fff;
+            background-color: rgba(var(--theme-color), 1);
+            border-radius: 4px;
+            background: linear-gradient(to right, rgba(var(--theme-color), 1), rgba(var(--theme-color2), 1));
+        }
+        #modalTotal {
+            padding-left: 20px; /* Adjust the negative value to move left */
+        }
+
+        
+
+
+
+        @media (max-width: 778px) {
+            .modal-dialog {
+                max-width: 100%;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container-fluid table-container display responsive wrap fade-in">
+
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+    
+        <div class="d-flex align-items-center position-relative"> <!-- Added position-relative -->
+            <div id="dataTables_filter_container" class="me-2">        
+            </div>
+        </div>
+          
+              
+        <div class="table-responsive">
+            <table class="table" id="form-data-table">
+                <thead>
+                    <tr>          
+                        <th scope="col">S.No</th>
+                        <th scope="col">Transaction No</th>
+                        <th scope="col">Order No</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Download</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pdf in pdf_records %}
+                        <tr>            
+                            <td>{{ forloop.counter }}</td> 
+                            <td>{{ pdf.transaction_id }}</td>
+                            <td>
+                                <a href="{% url 'bill_generate_with_order' pdf.order_no %}">{{ pdf.order_no }}</a>
+                            </td>
+                            <td>{{ pdf.datetime|date:"d-m-Y H:i:s" }}</td>
+                            <td>
+                                <a href="{{ pdf.pdf_file.url }}" class="btn btn-primary no-flex-btn" target="_blank"><i class="ri-arrow-down-circle-line"></i></a>
+                            </td>
+                        </tr>       
+                    {% endfor %}
+                </tbody>                             
+            </table>
+        </div>
+        
+
+
+    
+
+    
+    
+
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'error' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                var errorAlertElement = document.getElementById('floating-alert-error');
+                var errorMessage = document.getElementById('floating-alert-error-message');
+                errorMessage.textContent = "{{ message|safe }}";
+                errorAlertElement.style.display = 'block';
+                errorAlertElement.classList.add('show');
+
+                setTimeout(function () {
+                    errorAlertElement.classList.remove('show');
+                    errorAlertElement.style.display = 'none';
+                }, 3000); // 2 seconds delay for success alert
+                });                                        
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="{% static 'super_admin/js/index.js' %}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteButtons = document.querySelectorAll('.btn-delete');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function (event) {
+                    event.preventDefault(); 
+                    const deleteUrl = this.getAttribute('data-href'); 
+
+                    // SweetAlert2 confirmation modal
+                    Swal.fire({
+                        title: 'Are you sure,?',
+                        text: "You want delete this category,This action cannot be undone!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirect to the delete URL if confirmed
+                            window.location.href = deleteUrl;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+{% endblock content %}

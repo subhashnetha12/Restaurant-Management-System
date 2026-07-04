@@ -1,0 +1,817 @@
+{% include 'Waiter/base.html' %}
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Orders</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+    
+        .menu-item img {
+            width: 100%;
+            height: 130px; /* Reduced height */
+            object-fit: cover;
+            border-radius: 8px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .menu-item img:hover {
+            transform: scale(1.05);
+        }
+
+        .card {
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .select-container {
+            position: relative;
+        }
+
+        .select-container label {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            font-size: 14px;
+            font-weight: bold;
+            color: #000000;
+            pointer-events: none;
+        }
+
+        .select-container .form-select {
+            padding-left: 45px;
+            font-size: 14px;
+            height: 30px;
+        }
+
+        .quantity-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px 10px;
+            width: 100%;
+            background: white;
+        }
+
+        .quantity-btn {
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #5a5a5a;
+        }
+
+        .quantity-btn:disabled {
+            color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            background: transparent;
+        }
+
+        .btn-primary {
+            font-size: 12px;
+            padding: 5px 8px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 0.5;
+            }
+        }
+
+        #menuItems {
+            height:55vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        #orderListContainer {
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #orderListContainer table {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            table-layout: fixed;
+            width: 100%;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        #orderListContainer th {
+            background: #bebebe;
+            color: #282828;
+            text-align: left;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100px; 
+        }
+
+        #orderListContainer td {
+            text-align: left;
+            vertical-align: middle;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100px; 
+        }
+
+        #orderListContainer h6 {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .table .form-control{
+            border: none;
+            padding: 5px 5px 5px 10px;
+        }
+        .table .form-control:focus{
+            border: none;
+            box-shadow: none;
+        }
+
+    
+        .table td, .table th {
+            text-align: center;
+            vertical-align: middle;
+        }
+    
+    
+        /* Modal styles */
+        .modal-header {
+            padding: 0.5rem 1rem;
+            background-color: #F07054;
+            color: #ffff;
+        }
+
+        .modal-body {
+            padding-top: 25px;
+            border: 1px solid #dbdbdb;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .modal-title {
+            font-weight: bold;
+        }
+
+        .item-name{
+            font-size: 15px;
+        }
+
+        .card-body{
+            padding-top:5px;
+            padding-bottom: 5px;
+            padding-left: -50px !important;
+            padding-right: -50px !important;
+        }
+
+        .table-shift-select{
+            width: 180px;
+        }
+
+        .toast-notification {
+            position: absolute;
+            background-color: #252b24;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 14px;
+            opacity: 0.95;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .flying-icon {
+            position: fixed;
+            font-size: 35px;
+            color: #28a745;
+            z-index: 2000;
+            pointer-events: none;
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+            transition:
+                transform 1.2s cubic-bezier(0.25, 1, 0.5, 1),
+                opacity 0.8s ease 1.0s;
+        }
+
+
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</head>
+
+<body>
+    <div class="container mt-3 mb-3">
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+
+        <div class="p-3 mb-3 bg-light border rounded shadow-sm">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <!-- Title -->
+                <div class="flex-grow-1">
+                    <h5 class="mb-0 text-primary">Adding items On <strong>{{ active_orders.table_no }}</strong></h5>
+                </div>
+        
+                <!-- Shift to Table -->
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <label for="available_tables" class="form-label fw-bold mb-0 text-secondary">Shift to Table:</label>
+                    
+                    <select id="available_tables" class="form-select table-shift-select" style="min-width: 150px;">
+                        <option value="" selected disabled>Select Table</option>
+                        {% for table in available_tables %}
+                            <option value="{{ table.table_no }}">{{ table.table_no }}</option>
+                        {% endfor %}
+                    </select>
+        
+                    <button class="btn btn-primary confirm_button" onclick="shiftTable('{{ active_orders.order_no }}')" type="button">
+                        Confirm Shift
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex mb-3 p-2">
+            <input type="text" id="searchMenu" class="form-control me-2" placeholder="Search menu items..." onkeyup="filterMenu()">
+            
+            <select id="categoryFilter" class="form-select me-2" onchange="filterMenu()">
+                <option value="">All Categories</option>
+                {% for category in cat_det %}
+                <option value="{{ category.name }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        
+            <select id="typeFilter" class="form-select" onchange="filterMenu()">
+                <option value="">All Types</option>
+                <option value="Veg">Veg</option>
+                <option value="Non-Veg">Non-Veg</option>
+            </select>
+        </div>
+
+
+        <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-dark d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#selectedItemsModal">
+                <span>View Selected Items</span>
+                <span class="badge bg-danger" id="selectedItemCount">0</span>
+            </button>
+        </div>
+        
+    
+        <h4 class="mb-3">Menu Items</h4>
+    
+        <div id="menuItems" class="mb-3">
+            {% for category in cat_det %}
+            <h5 class="category-title">{{ category.name }}</h5>
+            <div class="row row-cols-1 row-cols-lg-4 row-cols-md-3 g-2 mb-3">
+                {% for item in all_menuitems %}
+                    {% if item.category == category.name %}
+                    <div class="col menu-item" data-category="{{ item.category }}" data-type="{{ item.type }}">
+                        <div class="card p-2">
+                            <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}">
+                            <div class="card-body text-center abcd">
+                                <h6 class="mb-1 item-name"><strong>{{ item.name }}</strong></h6>
+                                <p class="mb-0">Price: Rs. <span id="mt_price_{{forloop.counter}}"></span></p>   
+                                <input type="text" id="mt_item_name_{{forloop.counter}}" value="{{item.name}}" hidden>                             
+                                <input type="number" id="mt_price2_{{forloop.counter}}" hidden>                             
+                            </div>                                
+                            <div class="select-container mb-1">
+                                <label class="fw-bold" for="size_{{forloop.counter}}">Size:</label>
+                                <select class="form-select form-select-sm size-dropdown" style="border:1px solid #d0d0d0;" 
+                                        id="mt_size_{{forloop.counter}}" 
+                                        data-input-target="mt_price2_{{forloop.counter}}" 
+                                        data-price-target="mt_price_{{forloop.counter}}" 
+                                        data-order-type="{{ active_orders.order_type }}" 
+                                        onchange="updatePrice('{{forloop.counter}}')">
+                                    
+                                    {% for detail in menuitems_det %}
+                                        {% if detail.name == item.name %}
+                                            <option value="{{ detail.table_price }}" 
+                                                    data-size="{{ detail.size }}" 
+                                                    data-table-price="{{ detail.table_price }}" 
+                                                    data-takeaway-price="{{ detail.takeaway_price }}">
+                                                {{ detail.size }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>                            
+                            <div class="quantity-container mb-1">
+                                <label class="fw-bold">Qty:</label>
+                                <button class="quantity-btn" onclick="decreaseQuantity('{{forloop.counter}}')">-</button>
+                                <input type="number" class="quantity-input" id="mt_qty_{{forloop.counter}}" value="1" min="1" readonly>
+                                <button class="quantity-btn" onclick="increaseQuantity('{{forloop.counter}}')">+</button>
+                            </div>
+                                                    
+                            <button 
+                                class="btn btn-primary" 
+                                onclick="handleAddClick(this, document.getElementById('mt_item_name_{{forloop.counter}}').value, 'mt_size_{{forloop.counter}}', 'mt_qty_{{forloop.counter}}')">
+                                Add
+                            </button>
+                        
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>                             
+    </div>
+
+
+<!-- SELECTED ITEMS MODAL WITH FULL DETAILS -->
+<div class="modal fade" id="selectedItemsModal" tabindex="-1" aria-labelledby="selectedItemsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-xl">
+        <div class="modal-content">
+            <form action="" method="post">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="selectedItemsModalLabel">Selected Items</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <h5 class="mb-3">Adding items On <strong>{{ active_orders.table_no }}</strong></h5>
+
+                    <input type="number" name="no_of_rows" id="no_of_rows" hidden>
+
+                    <div id="orderListContainer">
+                        <table class="table table-bordered mb-2">
+                            <thead>
+                                <tr>
+                                    <th style="width: 45%;">Item</th>
+                                    <th style="width: 19%;">Qty</th>
+                                    <th style="width: 20%;">Price(Rs)</th>
+                                    <th style="width: 16%;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderTableBody">
+                                {% for i in active_orders_details %}
+                                    {% if active_orders.order_no == i.order_no %}
+                                    <tr id="{{ forloop.counter }}" class="item-row">
+                                        <td>            
+                                            {{ i.menu_item }} ({{ i.size }})         
+                                            <input type="text" name="item_name_{{ forloop.counter }}" value="{{ i.menu_item }}" hidden>
+                                            <input type="text" name="item_size_{{ forloop.counter }}" value="{{ i.size }}" hidden>
+                                        </td> 
+                                        <td>
+                                            <input type="number" name="qty_{{ forloop.counter }}" id="qty-{{ forloop.counter }}" 
+                                                {% if active_orders.status == 'Served' %}  min="{{ i.quantity }}"{% else %} min="1" {% endif %}
+                                                class="form-control text-center" value="{{ i.quantity }}"  
+                                                onchange="updateQuantity('{{ forloop.counter }}')">
+                                        </td>
+
+                                        <td>
+                                            <span id="price-{{ forloop.counter }}">{{ i.price|floatformat:2 }}</span>
+                                            <input type="number" id="price_{{ forloop.counter }}" name="price_{{ forloop.counter }}" value="{{ i.price }}" hidden>
+
+                                            {% with loop_counter=forloop.counter %}
+                                                {% for detail in menuitems_det %}
+                                                    {% if detail.name == i.menu_item and detail.size == i.size %}
+                                                        {% if active_orders.order_type == "Dine-In" %}
+                                                            <input type="number" id="base_price-{{ loop_counter }}" name="base_price_{{ loop_counter }}"
+                                                                value="{{ detail.table_price }}" hidden>
+                                                        {% endif %}
+                                                        {% if active_orders.order_type == "Takeaway" %}
+                                                            <input type="number" id="base_price-{{ loop_counter }}" name="base_price_{{ loop_counter }}"
+                                                                value="{{ detail.takeaway_price }}" hidden>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endwith %}
+                                        </td>
+
+                                        <td>
+                                            {% if active_orders.status != 'Served' %}
+                                                <button class="btn btn-sm btn-danger" type="button" onclick="removeFromOrder('{{ forloop.counter }}')">x</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6>Total Price: Rs.<span id="totalPriceDisplay">{{ active_orders.total_amount }}</span></h6>
+                    <input type="number" name="totalPrice" id="totalPriceInput" value="{{ active_orders.total_amount }}" hidden>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-success w-100" type="submit">Add More Items</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function handleAddClick(button, name, sizeId, qtyId) {
+
+        addToOrder(sizeId.replace('mt_size_', '')); // keep original index usage
+        
+        setTimeout(() => {
+            animateToSelectedButtonFromButton(button);
+            showItemAddedToast(name);
+        }, 50);
+    }
+
+    function showItemAddedToast(itemName) {
+        const target = document.querySelector('[data-bs-target="#selectedItemsModal"]');
+        if (!target) return;
+
+        // Remove any existing toast
+        document.querySelectorAll(".toast-notification").forEach(el => el.remove());
+
+        const toast = document.createElement("div");
+        toast.className = "toast-notification";
+        toast.textContent = `${itemName} added to order`;
+
+        const rect = target.getBoundingClientRect();
+        toast.style.top = `${rect.top + window.scrollY - 40}px`; 
+        toast.style.left = `${rect.left + window.scrollX}px`;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = "0";
+            setTimeout(() => toast.remove(), 400);
+        }, 2200);
+    }
+
+    function animateToSelectedButtonFromButton(buttonEl) {
+    const target = document.querySelector('[data-bs-target="#selectedItemsModal"]');
+    if (!buttonEl || !target) return;
+
+    const sourceRect = buttonEl.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+
+    const floatingIcon = document.createElement("div");
+    floatingIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
+    floatingIcon.classList.add('flying-icon');
+
+    // Set initial position (absolute) based on source element
+    floatingIcon.style.position = 'fixed';
+    floatingIcon.style.top = `${sourceRect.top + sourceRect.height / 2}px`;
+    floatingIcon.style.left = `${sourceRect.left + sourceRect.width / 2}px`;
+
+    // Append first to DOM to ensure proper render
+    document.body.appendChild(floatingIcon);
+
+    // Force reflow to trigger animation
+    floatingIcon.offsetHeight;
+
+    // Calculate movement
+    const deltaX = (targetRect.left + targetRect.width / 2) - (sourceRect.left + sourceRect.width / 2);
+    const deltaY = (targetRect.top + targetRect.height / 2) - (sourceRect.top + sourceRect.height / 2);
+
+    // Animate using transform
+    floatingIcon.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
+    floatingIcon.style.opacity = "0";
+
+    // Cleanup
+    setTimeout(() => floatingIcon.remove(), 2000);
+}
+
+</script>
+
+
+    <script>
+      function shiftTable(orderNo) {
+        let selectedTable = document.getElementById("available_tables").value;
+        
+        if (!selectedTable) {
+            alert("Please select a table before shifting.");
+            return;
+        }
+
+        let csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(`/shift_table/${orderNo}/${encodeURIComponent(selectedTable)}/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrftoken,
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();  // Reload the page to display Django messages
+            } else {
+                location.reload();  // Even on failure, reload to show Django error messages
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            location.reload();  // Reload to show Django messages if there's an error
+        });
+    }
+
+    </script>
+    
+    {% if messages %}
+    {% for message in messages %}
+        {% if 'success' in message.tags %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var successAlertElement = document.getElementById('floating-alert-success');
+                var successMessage = document.getElementById('floating-alert-success-message');
+
+                successMessage.textContent = "{{ message|safe }}";
+                successAlertElement.style.display = 'block';
+                successAlertElement.classList.add('show');
+
+                setTimeout(function () {
+                    successAlertElement.classList.remove('show');
+                    successAlertElement.style.display = 'none';
+                }, 3000); // 2 seconds delay for success alert
+            });
+        </script>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+{% if messages %}
+    {% for message in messages %}
+        {% if 'error' in message.tags %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+            var errorAlertElement = document.getElementById('floating-alert-error');
+            var errorMessage = document.getElementById('floating-alert-error-message');
+            errorMessage.textContent = "{{ message|safe }}";
+            errorAlertElement.style.display = 'block';
+            errorAlertElement.classList.add('show');
+
+            setTimeout(function () {
+                errorAlertElement.classList.remove('show');
+                errorAlertElement.style.display = 'none';
+            }, 3000); // 2 seconds delay for success alert
+            });                                        
+        </script>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+    
+
+
+    <script>
+
+        function updateSelectedItemCount() {
+            const count = document.querySelectorAll("#orderTableBody .item-row").length;
+            document.getElementById("selectedItemCount").textContent = count;
+        }
+
+
+        function updateRowCount() {
+            let rowCount = document.querySelectorAll(".item-row").length;
+            document.getElementById("no_of_rows").value = rowCount;
+        }
+
+
+        function updatePrice(row_no) {
+            let dropdown = document.getElementById(`mt_size_${row_no}`);
+            let priceTarget = document.getElementById(`mt_price_${row_no}`);
+            let priceTargetInput = document.getElementById(`mt_price2_${row_no}`);
+            let orderType = dropdown.getAttribute("data-order-type");
+
+            if (dropdown && priceTarget) {
+                let selectedOption = dropdown.options[dropdown.selectedIndex];
+
+                let price;
+                if (orderType === "Dine-In") {
+                    price = selectedOption.getAttribute("data-table-price");
+                } else if (orderType === "Takeaway") {
+                    price = selectedOption.getAttribute("data-takeaway-price");
+                }
+
+                priceTarget.textContent = parseFloat(price).toFixed(2);
+                priceTargetInput.value = parseFloat(price);
+            }
+        }
+
+        // Initialize prices on page load
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".size-dropdown").forEach(function (dropdown) {
+                let priceTargetId = dropdown.getAttribute("data-price-target");
+                let priceTarget = document.getElementById(priceTargetId);
+                let priceTargetInput = document.getElementById(dropdown.getAttribute("data-input-target"));
+                let orderType = dropdown.getAttribute("data-order-type");
+
+                if (dropdown.options.length > 0) {
+                    let selectedOption = dropdown.options[0];
+                    let price = orderType === "Dine-In" ? selectedOption.getAttribute("data-table-price") : selectedOption.getAttribute("data-takeaway-price");
+
+                    priceTarget.textContent = parseFloat(price).toFixed(2);
+                    priceTargetInput.value = parseFloat(price);
+                }
+
+                dropdown.addEventListener("change", function () {
+                    updatePrice(this.id.split("_")[2]); // Extract row number from ID
+                });
+            });
+        });
+
+
+        function increaseQuantity(row_no) {
+            let input = document.getElementById(`mt_qty_${row_no}`);
+            input.value = parseInt(input.value) + 1;
+        }
+
+        function decreaseQuantity(row_no) {
+            let input = document.getElementById(`mt_qty_${row_no}`);
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+
+
+        function updateQuantity(row_no) {
+            let qtyInput = document.getElementById(`qty-${row_no}`);
+            let priceElement = document.getElementById(`price-${row_no}`);
+            let priceInput = document.getElementById(`price_${row_no}`);
+            let basePriceInput = document.getElementById(`base_price-${row_no}`);
+
+            if (!qtyInput || !priceElement || !priceInput || !basePriceInput) return;
+
+            let basePrice = parseFloat(basePriceInput.value) || 0;
+            let quantity = parseInt(qtyInput.value) || 1;
+
+            let newPrice = basePrice * quantity;
+            priceElement.textContent = newPrice.toFixed(2);
+            priceInput.value = newPrice.toFixed(2);
+
+            recalculateTotal();
+        }
+
+        function recalculateTotal() {
+            let totalPrice = 0;
+            document.querySelectorAll("input[type='number'][id^='price_']").forEach(input => {
+                totalPrice += parseFloat(input.value) || 0;
+            });
+            document.getElementById("totalPriceDisplay").textContent = totalPrice.toFixed(2);
+            document.getElementById("totalPriceInput").value = totalPrice.toFixed(2);
+        }
+
+        function initializeOrderItems() {
+            orderItems = {};
+            document.querySelectorAll("#orderTableBody tr").forEach(row => {
+                let itemKey = row.id;
+                let nameInput = row.querySelector("input[name^='item_name_']");
+                let sizeInput = row.querySelector("input[name^='item_size_']");
+                if (!nameInput || !sizeInput) return;
+                orderItems[itemKey] = { name: nameInput.value, size: sizeInput.value };
+            });
+            updateRowCount();
+            recalculateTotal();
+        }
+
+        function findOrderKey(itemName, itemSize) {
+            return Object.keys(orderItems).find(key => orderItems[key].name === itemName && orderItems[key].size === itemSize) || null;
+        }
+
+        function addToOrder(row_no) {
+            let item_name = document.getElementById(`mt_item_name_${row_no}`);
+            let item_size = document.getElementById(`mt_size_${row_no}`);
+            let item_qty = document.getElementById(`mt_qty_${row_no}`);
+            let item_price = document.getElementById(`mt_price2_${row_no}`);
+
+            if (!item_name || !item_size || !item_qty || !item_price) return;
+
+            let sizeValue = item_size.options[item_size.selectedIndex].dataset.size;
+            let itemKey = findOrderKey(item_name.value, sizeValue);
+
+            if (itemKey) {
+                let qtyInput = document.getElementById(`qty-${itemKey}`);
+                qtyInput.value = parseInt(qtyInput.value) + parseInt(item_qty.value);
+                updateQuantity(itemKey);
+            } else {
+                let orderTableBody = document.getElementById("orderTableBody");
+                let price = parseFloat(item_price.value) * parseInt(item_qty.value);
+                let rowCount = document.querySelectorAll(".item-row").length + 1;
+
+                let row = document.createElement("tr");
+                row.id = rowCount;
+                row.classList.add("item-row");
+                row.innerHTML = `
+                    <td>${item_name.value} (${sizeValue})
+                        <input type="hidden" name="item_name_${rowCount}" value="${item_name.value}">
+                        <input type="hidden" name="item_size_${rowCount}" value="${sizeValue}">
+                    </td>
+                    <td>
+                        <input type="number" id="qty-${rowCount}" name="qty_${rowCount}" class="form-control text-center" value="${item_qty.value}" min="1" onchange="updateQuantity('${rowCount}')">
+                    </td>
+                    <td>
+                        <span id="price-${rowCount}">${price.toFixed(2)}</span>
+                        <input type="hidden" id="price_${rowCount}" name="price_${rowCount}" value="${price}">
+                        <input type="hidden" id="base_price-${rowCount}" name="base_price_${rowCount}" value="${item_price.value}">
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" type="button" onclick="removeFromOrder('${rowCount}')">x</button>
+                    </td>
+                `;
+                orderTableBody.appendChild(row);
+                orderItems[rowCount] = { name: item_name.value, size: sizeValue };
+                updateRowCount();
+
+                
+            }
+            recalculateTotal();
+            updateSelectedItemCount();
+        }
+
+        function removeFromOrder(itemKey) {
+            let item = document.getElementById(itemKey);
+            if (item) {
+                item.remove();
+                delete orderItems[itemKey];
+
+                // Recalculate total price
+                recalculateTotal();
+
+                // Update row IDs sequentially
+                let rows = document.querySelectorAll(".item-row");
+                rows.forEach((row, index) => {
+                    let newIndex = index + 1;
+                    row.id = newIndex;
+
+                    // Update input IDs and names inside the row
+                    row.querySelectorAll("input").forEach(input => {
+                        if (input.name.startsWith("item_name_")) {
+                            input.name = `item_name_${newIndex}`;
+                        } else if (input.name.startsWith("item_size_")) {
+                            input.name = `item_size_${newIndex}`;
+                        } else if (input.name.startsWith("qty_")) {
+                            input.name = `qty_${newIndex}`;
+                            input.id = `qty-${newIndex}`;
+                            input.setAttribute("onchange", `updateQuantity('${newIndex}')`);
+                        } else if (input.name.startsWith("price_")) {
+                            input.name = `price_${newIndex}`;
+                            input.id = `price_${newIndex}`;
+                        } else if (input.name.startsWith("base_price_")) {
+                            input.name = `base_price_${newIndex}`;
+                            input.id = `base_price-${newIndex}`;
+                        }
+                    });
+
+                    // Update displayed price span ID
+                    let priceSpan = row.querySelector("span[id^='price-']");
+                    if (priceSpan) {
+                        priceSpan.id = `price-${newIndex}`;
+                    }
+
+                    // Update remove button onclick function
+                    let removeBtn = row.querySelector("button");
+                    if (removeBtn) {
+                        removeBtn.setAttribute("onclick", `removeFromOrder('${newIndex}')`);
+                    }
+                });
+
+                updateRowCount();
+                updateSelectedItemCount();
+            }
+        }
+
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initializeOrderItems();  
+            setTimeout(updateSelectedItemCount, 100);
+        });
+
+    </script>
+    
+</body>
+
+</html>

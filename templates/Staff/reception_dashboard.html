@@ -1,0 +1,171 @@
+{% extends "Staff/base.html" %}
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Dashboard</title>
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .dashboard-header {
+            color: rgb(255, 177, 21);
+            font-weight: bold;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .table-card {
+            width: 220px;
+            height: 250px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            position: relative;
+        }
+
+        .table-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .table-image {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            transition: filter 0.3s ease-in-out;
+        }
+
+        .table-card:hover .table-image {
+            filter: brightness(90%);
+        }
+
+        .occupied {
+            box-shadow: 0px 0px 15px rgba(255, 69, 58, 0.6);
+            animation: pulseRed 1.5s infinite alternate;
+        }
+
+        .available {
+            box-shadow: 0px 0px 15px rgba(50, 215, 75, 0.6);
+            animation: pulseGreen 1.5s infinite alternate;
+        }
+
+        .status-badge {
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            animation: fadeIn 1.2s ease-in-out;
+        }
+
+        .occupied .status-badge {
+            color: red;
+        }
+
+        .available .status-badge {
+            color: green;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulseRed {
+            from {
+                box-shadow: 0px 0px 10px rgba(255, 69, 58, 0.5);
+            }
+            to {
+                box-shadow: 0px 0px 20px rgba(255, 69, 58, 0.7);
+            }
+        }
+
+        @keyframes pulseGreen {
+            from {
+                box-shadow: 0px 0px 10px rgba(50, 215, 75, 0.5);
+            }
+            to {
+                box-shadow: 0px 0px 20px rgba(50, 215, 75, 0.7);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid text-center">
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        <h3 class="dashboard-header">Staff Dashboard</h3> <br>
+
+        <div class="container mt-4">
+            <h4 class="text-center mb-3">🍽️ Table Overview</h4>
+            <div class="row justify-content-center">
+                {% for table in tables %}
+                    <div class="col-md-3 mb-4">
+                        {% if table.status == 'Occupied' %}<a href="{% url 'addmore_items' table.occupied_order_no %}">{% else %}
+                            <a href="{% url 'place_order' %}?table_no={{ table.table_no }}">{% endif %}
+                            <div class="card table-card {% if table.status == 'Occupied' %}occupied{% else %}available{% endif %}">
+                                <img src="{{ table.image.url }}" class="table-image" alt="Table {{ table.table_no }}">
+                                <div class="card-body text-center">
+                                    <h5 style="font-weight: 600;">{{ table.table_no }}</h5>
+                                    <p><span class="status-badge">{{ table.status }}</span></p>
+                                    {% if table.status == 'Occupied' %}
+                                        {% for order in relevant_orders %}
+                                            {% if table.occupied_order_no == order.order_no %}
+                                                <p style="margin-top: -20px; color: rgb(0, 174, 180);"><strong>Amount: {{ order.total_amount }}</strong></p>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>  
+    
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
+{% endblock content %}

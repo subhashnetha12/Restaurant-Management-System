@@ -1,0 +1,362 @@
+
+
+{% extends "./base.html" %}
+
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <title>Checkout Page</title>
+
+    <link rel="stylesheet" href="{% static 'super_admin/css/restaurant_mgmt.css' %}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <h5>Restaurants</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-xxl-3 col-xl-4">
+                        <ul class="nav setting-main-box sticky theme-scrollbar" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                            <li>
+                                <button class="nav-link active" id="Settings-tab" data-bs-toggle="pill" data-bs-target="#Settings" role="tab" aria-controls="Settings" aria-selected="true">
+                                    <i class="ri-settings-line"></i> Admin Settings</button>
+                            </li>
+                            <li>
+                                <button class="nav-link" id="Info-tab" data-bs-toggle="pill" data-bs-target="#Info" role="tab" aria-controls="Info" aria-selected="false">
+                                    <i class="ri-information-2-line"></i>Restaurant Info</button>
+                            </li>
+                            <li>
+                                <button class="nav-link" id="Image-tab" data-bs-toggle="pill" data-bs-target="#Image" role="tab" aria-controls="Image" aria-selected="false">
+                                    <i class="ri-image-circle-fill"></i> Image Gallery </button>
+                            </li>
+                            <li>
+                                <button class="nav-link" id="Service-tab" data-bs-toggle="pill" data-bs-target="#Service" role="tab" aria-controls="Service" aria-selected="false">
+                                    <i class="ri-customer-service-line"></i>Service</button>
+                            </li>
+                            <li>
+                                <button class="nav-link" id="Working-tab" data-bs-toggle="pill" data-bs-target="#Working" role="tab" aria-controls="Working" aria-selected="false">
+                                    <i class="ri-hourglass-2-fill"></i>Hours of Working</button>
+                            </li>
+                            <li>
+                                <button class="nav-link" id="Restaurant-tab" data-bs-toggle="pill" data-bs-target="#Restaurant" role="tab" aria-controls="Restaurant" aria-selected="false">
+                                    <i class="ri-hotel-line"></i>Restaurant (Active/Inactive)</button>
+                            </li>
+                            <li>
+                                <button class="nav-link" id="Feature-tab" data-bs-toggle="pill" data-bs-target="#Feature" role="tab" aria-controls="Feature" aria-selected="false">
+                                    <i class="ri-settings-2-line"></i>Feature Setting</button>
+                            </li>
+                            <li>
+                                <button class="nav-link" id="delivery-tab" data-bs-toggle="pill" data-bs-target="#delivery" role="tab" aria-controls="delivery" aria-selected="false">
+                                    <i class="ri-truck-line"></i>Delivery Charge</button>
+                            </li>
+                            <li>
+                                <button class="nav-link" id="offer-tab" data-bs-toggle="pill" data-bs-target="#offer" role="tab" aria-controls="offer" aria-selected="false">
+                                    <i class="ri-alarm-warning-line"></i>Special Offer</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-xxl-9 col-xl-8 col-12">
+                        <div class="restaurant-tab">
+                            <div class="tab-content" id="v-pills-tabContent">
+                                <div class="tab-pane fade show active" id="Settings" role="tabpanel" aria-labelledby="Settings-tab">
+                                    <div class="input-items">
+                                        <div class="row gy-3">
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Name</h6>
+                                                    <input type="text" name="text" placeholder="Enter Your Name">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Email</h6>
+                                                    <input type="email" name="email" placeholder="Enter Your Email">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Phone</h6>
+                                                    <input type="number" name="number" placeholder="Enter Your Number">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Password</h6>
+                                                    <input type="password" name="password" placeholder="Enter Your Password">
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="input-box-form">
+                                                    <h6>Image</h6>
+                                                    <span class="choose-img-box" data-bs-toggle="modal" data-bs-target="#select-img" title="Quick View" tabindex="0">
+                                                        <i class="ri-add-circle-line"></i>
+                                                         Choose image </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="Info" role="tabpanel" aria-labelledby="Info-tab">
+                                    <div class="input-items">
+                                        <div class="row gy-3">
+                                            <div class="co-mdl-6">
+                                                <div class="input-box-form">
+                                                    <h6>First Name</h6>
+                                                    <input type="text" name="text" placeholder="Enter Your Name">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Category</h6>
+                                                    <select class="form-select" name="carlist">
+                                                        <option selected>Select Cuisines</option>
+                                                        <option value="">Pizza</option>
+                                                        <option value="">PASTA</option>
+                                                        <option value="">Fries</option>
+                                                        <option value="">Sandwiches</option>
+                                                        <option value="">Macaroni</option>
+                                                        <option value="">Maggi</option>
+                                                        <option value="">Créole</option>
+                                                        <option value="">Pasta</option>
+                                                        <option value="">Mexican</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Email</h6>
+                                                    <input type="email" name="email" placeholder="Enter Your Email">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Phone</h6>
+                                                    <input type="number" name="number" placeholder="Enter Your Number">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Password</h6>
+                                                    <input type="password" name="password" placeholder="Enter Your Password">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>confirm Password</h6>
+                                                    <input type="password" name="password" placeholder="Enter Your Password">
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="input-box-form">
+                                                    <h6>Address</h6>
+                                                    <textarea name="text" rows="4" placeholder="Enter Address"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="input-box-form">
+                                                    <h6>Image</h6>
+                                                    <span class="choose-img-box" data-bs-toggle="modal" data-bs-target="#select-img" title="Quick View" tabindex="0">
+                                                        <i class="ri-add-circle-line"></i>
+                                                         Choose image </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="Image" role="tabpanel" aria-labelledby="Image-tab">
+                                    <div class="input-items">
+                                        <div class="row gy-3">
+                                            <div class="col-12">
+                                                <div class="input-box-form">
+                                                    <h6>Image</h6>
+                                                    <span class="choose-img-box" data-bs-toggle="modal" data-bs-target="#select-img" title="Quick View" tabindex="0">
+                                                        <i class="ri-add-circle-line"></i>
+                                                         Choose image </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="Service" role="tabpanel" aria-labelledby="Service-tab">
+                                    <div class="service-box">
+                                        <div class="row gy-4">
+                                            <div class="col-md-6">
+                                                <div class="service-item">
+                                                    <input class="custom-checkbox" id="category1" type="checkbox" name="text">
+                                                    <img src="{% static 'super_admin/img/wifi-signal.png' %}" alt="">
+                                                    <label for="category1">Free WI-FI</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="service-item">
+                                                    <input class="custom-checkbox" id="category2" type="checkbox" name="text">
+                                                    <img src="{% static 'super_admin/img/music.png' %}" alt="">
+                                                    <label for="category2">Live Music</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="service-item">
+                                                    <input class="custom-checkbox" id="category3" type="checkbox" name="text">
+                                                    <img src="{% static 'super_admin/img/outdoor.png' %}" alt="">
+                                                    <label for="category3">Outdoor Seating</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="service-item">
+                                                    <input class="custom-checkbox" id="category4" type="checkbox" name="text">
+                                                    <img src="{% static 'super_admin/img/breakfast.png' %}" alt="">
+                                                    <label for="category4">Good for Breakfast</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="service-item">
+                                                    <input class="custom-checkbox" id="category5" type="checkbox" name="text">
+                                                    <img src="{% static 'super_admin/img/dinner.png' %}" alt="">
+                                                    <label for="category5">Good for Dinner</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="service-item">
+                                                    <input class="custom-checkbox" id="category6" type="checkbox" name="text">
+                                                    <img src="{% static 'super_admin/img/fried-rice.png' %}" alt="">
+                                                    <label for="category6">Good for Lunch</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="service-item">
+                                                    <input class="custom-checkbox" id="category7" type="checkbox" name="text">
+                                                    <img src="{% static 'super_admin/img/booking.png' %}" alt="">
+                                                    <label for="category7">Takes Reservations</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="service-item">
+                                                    <input class="custom-checkbox" id="category8" type="checkbox" name="text">
+                                                    <img src="{% static 'super_admin/img/vegan.png' %}" alt="">
+                                                    <label for="category8">Vegetarian Friendly</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="Working" role="tabpanel" aria-labelledby="Working-tab">
+                                    <div class="input-items">
+                                        <div class="row gy-3">
+                                            <div class="col-12">
+                                                <div class="input-box-form">
+                                                    <h6>Hours of Working</h6>
+                                                    <span class="choose-img-box" data-bs-toggle="modal" data-bs-target="#add-hours" title="Quick View" tabindex="0">
+                                                        <i class="ri-add-circle-line"></i>
+                                                        Add Working Hours </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="Restaurant" role="tabpanel" aria-labelledby="Restaurant-tab">
+                                    <div class="service-box">
+                                        <div class="row gy-4">
+                                            <div class="col-12">
+                                                <div class="service-item">
+                                                    <input class="custom-checkbox" id="category9" type="radio" name="text">
+                                                    <label for="category9">Active</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="service-item">
+                                                    <input class="custom-checkbox" id="category10" type="radio" name="text">
+                                                    <label for="category10">Inactive</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="Feature" role="tabpanel" aria-labelledby="Feature-tab">
+                                    <div class="input-items">
+                                        <div class="row gy-3">
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Opening Time</h6>
+                                                    <input type="time" name="text">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Closing Time</h6>
+                                                    <input type="time" name="text">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Cost</h6>
+                                                    <input type="number" name="number">
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="input-box-form">
+                                                    <h6>Image</h6>
+                                                    <span class="choose-img-box" data-bs-toggle="modal" data-bs-target="#select-img" title="Quick View" tabindex="0">
+                                                        <i class="ri-add-circle-line"></i>
+                                                         Choose image </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="delivery" role="tabpanel" aria-labelledby="delivery-tab">
+                                    <div class="input-items">
+                                        <div class="row gy-3">
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Delivery Charges Per km</h6>
+                                                    <input type="text" name="text" placeholder="2" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-box-form">
+                                                    <h6>Minimum Delivery Charges</h6>
+                                                    <input type="text" name="text" placeholder="8" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="input-box-form">
+                                                    <h6>Minimum Delivery Charges Within Km</h6>
+                                                    <input type="text" name="text" placeholder="10" disabled>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="offer" role="tabpanel" aria-labelledby="offer-tab">
+                                    <div class="input-items">
+                                        <div class="row gy-3">
+                                            <div class="col-12">
+                                                <div class="input-box-form">
+                                                    <h6>Offers</h6>
+                                                    <span class="choose-img-box" data-bs-toggle="modal" data-bs-target="#add-offer" title="Quick View" tabindex="0">
+                                                        <i class="ri-add-circle-line"></i>
+                                                        Add Special Offer</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <a href="#" class="btn restaurant-button">Save</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>   
+</html> 
+  {% endblock content %}

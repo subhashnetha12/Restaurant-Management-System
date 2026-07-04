@@ -1,0 +1,702 @@
+{% extends "Staff/base.html" %}
+
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Orders</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        .item-section{
+            width: 60%;
+            margin-right: -30px;
+        }
+        .selected-section{
+            width: 35%;
+            margin-left: -30px;
+        }
+        .menu-item img {
+            width: 100%;
+            height: 130px; /* Reduced height */
+            object-fit: cover;
+            border-radius: 8px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .menu-item img:hover {
+            transform: scale(1.05);
+        }
+
+        .card {
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .select-container {
+            position: relative;
+        }
+
+        .select-container label {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            font-size: 14px;
+            font-weight: bold;
+            color: #000000;
+            pointer-events: none;
+        }
+
+        .select-container .form-select {
+            padding-left: 45px;
+            font-size: 14px;
+            height: 30px;
+        }
+
+        .quantity-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px 10px;
+            width: 100%;
+            background: white;
+        }
+
+        .quantity-btn {
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #5a5a5a;
+        }
+
+        .quantity-btn:disabled {
+            color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            background: transparent;
+        }
+
+        .btn-primary {
+            font-size: 12px;
+            padding: 5px 8px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 0.5;
+            }
+        }
+
+        #menuItems {
+            height: 70vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        #orderListContainer {
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #orderListContainer table {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            table-layout: fixed;
+            width: 100%;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        #orderListContainer th {
+            background: #bebebe;
+            color: #282828;
+            text-align: left;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100px; 
+        }
+
+        #orderListContainer td {
+            text-align: left;
+            vertical-align: middle;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100px; 
+        }
+
+        #orderListContainer h6 {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .form-control{
+            border: none;
+            padding: 5px 5px 5px 10px;
+        }
+        .form-control:focus{
+            border: none;
+            box-shadow: none;
+        }
+
+        .order-type {
+            display: flex;
+            gap: 20px;
+        }
+
+        .order-type input[type="radio"] {
+            display: none; /* Hide default radio */
+        }
+
+        .order-type label {
+            width: 150px;
+            height: 50px;
+            display: flex;
+            flex-direction: row; /* Align icon & text side by side */
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #d3d3d3;
+            border-radius: 12px;
+            background: #fff;
+            font-size: 18px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: bold;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            gap: 8px; /* Space between icon & text */
+        }
+
+        .order-type label i {
+            font-size: 24px; /* Adjust icon size */
+        }
+
+        .order-type label:hover {
+            border-color: #aaa;
+            transform: scale(1.05);
+        }
+
+        .order-type input[type="radio"]:checked + label {
+            background: #90a6f9;
+            border-color: #6b87f5;
+            color: white;
+            box-shadow: 0 0 10px rgba(107, 135, 245, 0.6);
+        }
+
+        .order-type input[type="radio"]:checked + label i {
+            transform: scale(1.1);
+            transition: transform 0.3s ease;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container mt-4">
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+
+        <div class="row">
+            <!-- Menu Items Section -->
+            <div class="col-md-7 item-section">
+                <div class="d-flex mb-3 p-2">
+                    <input type="text" id="searchMenu" class="form-control me-2" placeholder="Search menu items..." onkeyup="filterMenu()">
+                    
+                    <select id="categoryFilter" class="form-select me-2" onchange="filterMenu()">
+                        <option value="">All Categories</option>
+                        {% for category in cat_det %}
+                        <option value="{{ category.name }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                
+                    <select id="typeFilter" class="form-select" onchange="filterMenu()">
+                        <option value="">All Types</option>
+                        <option value="Veg">Veg</option>
+                        <option value="Non-Veg">Non-Veg</option>
+                    </select>
+                </div>
+            
+                <h4>Menu Items</h4>
+            
+                <div id="menuItems">
+                    {% for category in cat_det %}                         
+                    <h4 class="category-title mt-3 ml-3">{{ category.name }}</h4>
+                    <div class="row row-cols-1 row-cols-md-3 mb-2 g-2">
+                        {% for item in all_menuitems %}
+                            {% if item.category == category.name %}
+                            <div class="col menu-item" data-category="{{ item.category }}" data-type="{{ item.type }}">
+                                <div class="card p-2">
+                                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}">
+                                    <div class="card-body text-center">
+                                        <h6 class="mb-1"><strong>{{ item.name }}</strong></h6>
+                                        <p class="mb-0">Price: Rs. <span id="price-{{ item.name|slugify }}"></span></p>
+                                    </div>
+            
+                                    <!-- Size Dropdown -->
+                                    <div class="select-container mb-1">
+                                        <label class="fw-bold" for="size-{{ item.name|slugify }}">Size:</label>
+                                        <select class="form-select form-select-sm size-dropdown"
+                                                id="size-{{ item.name|slugify }}"
+                                                data-price-target="price-{{ item.name|slugify }}"
+                                                onchange="updatePrice('{{ item.name|slugify }}')">
+                                            {% for detail in menuitems_det %}
+                                                {% if detail.name == item.name %}
+                                                    <option value="{{ detail.price }}"
+                                                            data-dinein-price="{{ detail.table_price }}"
+                                                            data-takeaway-price="{{ detail.takeaway_price }}">
+                                                        {{ detail.size }}
+                                                    </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+            
+                                    <!-- Quantity Selector -->
+                                    <div class="quantity-container mb-1">
+                                        <label class="fw-bold">Qty:</label>
+                                        <button class="quantity-btn" onclick="decreaseQuantity('qty-{{ item.name|slugify }}')">-</button>
+                                        <input type="number" class="quantity-input" id="qty-{{ item.name|slugify }}" value="1" min="1" readonly>
+                                        <button class="quantity-btn" onclick="increaseQuantity('qty-{{ item.name|slugify }}')">+</button>
+                                    </div>
+                                    
+                                    <!-- Add Button -->
+                                    <button class="btn btn-primary"
+                                        onclick="addToOrder('{{ item.name }}', 'size-{{ item.name|slugify }}', 'qty-{{ item.name|slugify }}')">
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>                             
+            </div>
+            
+
+            <!-- Vertical Divider -->
+            <div class="col-md-1 d-flex align-items-center justify-content-center">
+                <div class="vr" style="height: 100%; width: 2px; background-color: #ccc;"></div>
+            </div>
+    
+            <!-- Selected Items Section -->
+            <div class="col-md-4 selected-section" >
+
+                <form action="" method="post">
+                    {% csrf_token %}
+
+                    <div class="order-type mb-3">
+                        <input type="radio" id="dineIn" name="order_type" value="Dine-In" checked required onchange="toggleTableSelection()">
+                        <label for="dineIn">
+                            <i class="fas fa-utensils"></i>
+                            <span>Dine-In</span>
+                        </label>
+                        {% if not request.GET.table_no %}
+                        <input type="radio" id="takeAway" name="order_type" value="Takeaway" required onchange="toggleTableSelection()">
+                        <label for="takeAway">
+                            <i class="fas fa-shopping-bag"></i>
+                            <span>Takeaway</span>
+                        </label>
+                        {% endif %}
+                    </div>
+
+                    <div id="tableSelection">
+                        {% if request.GET.table_no %}
+                            <h4 class="mb-3">Selected Table: <strong>{{ request.GET.table_no }}</strong></h4>
+                            <input type="hidden" name="table_no" value="{{ request.GET.table_no }}">
+                        {% else %}
+                            <h4 class="mb-3">Table Selection</h4>
+                            <select id="tableSelect" name="table_no" class="form-select mb-3" >
+                                <option value="">Select Table</option>
+                                {% for table in tables %}
+                                    <option value="{{ table.table_no }}">{{ table.table_no }}</option>
+                                {% endfor %}
+                            </select>
+                        {% endif %}
+                    </div>    
+
+                    <input type="number" name="no_of_rows" id="no_of_rows" hidden>
+                    
+                    <h4 class="mb-3">Selected Items</h4>
+                    <div id="orderListContainer" style="display: none;">
+                        <table class="table table-bordered mb-2">
+                            <thead>
+                                <tr>
+                                    <th style="width: 45%;">Item</th>
+                                    <th style="width: 19%;">Qty</th>
+                                    <th style="width: 20%;">Price(Rs)</th>
+                                    <th style="width: 16%;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderTableBody"></tbody>
+                        </table>
+                    </div>
+                    <h6>Total Price: Rs.<span id="totalPriceDisplay">0.00</span></h6>
+                    <input type="number" name="totalPrice" id="totalPriceInput" hidden>                 
+                    <button class="btn btn-success mt-3 w-100" type="submit" >Place Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleTableSelection() {
+            let dineIn = document.getElementById("dineIn").checked;
+            let tableSelection = document.getElementById("tableSelection");
+            let tableSelect = document.getElementById("tableSelect");
+
+            if (dineIn) {
+                tableSelection.style.display = "block";
+                if (tableSelect) {
+                    tableSelect.setAttribute("required", "required");
+                }
+            } else {
+                tableSelection.style.display = "none";
+                if (tableSelect) {
+                    tableSelect.removeAttribute("required");
+                }
+            }
+        }
+
+        // Initialize table selection based on default selection
+        document.addEventListener("DOMContentLoaded", function() {
+            toggleTableSelection();
+        });
+
+    </script>
+
+    <script>
+       function updatePrice(slugifiedName) {
+            let dropdown = document.getElementById(`size-${slugifiedName}`);
+            let priceTarget = document.getElementById(`price-${slugifiedName}`);
+            let orderType = document.querySelector('input[name="order_type"]:checked')?.value;
+
+            if (dropdown && priceTarget) {
+                let selectedOption = dropdown.options[dropdown.selectedIndex];
+
+                // Set default price as table_price (Dine-In)
+                let basePrice = parseFloat(selectedOption.value) || 0;
+                let dineInPrice = parseFloat(selectedOption.getAttribute("data-dinein-price")) || basePrice;
+                let takeawayPrice = parseFloat(selectedOption.getAttribute("data-takeaway-price")) || basePrice;
+
+                // Default to table_price initially
+                let finalPrice = dineInPrice;
+
+                // Change price based on order type
+                if (orderType === "Takeaway") {
+                    finalPrice = takeawayPrice;
+                }
+
+                priceTarget.textContent = finalPrice.toFixed(2);
+            }
+        }
+
+        // Set initial prices on page load
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".size-dropdown").forEach(function (dropdown) {
+                let priceTargetId = dropdown.getAttribute("data-price-target");
+                let priceTarget = document.getElementById(priceTargetId);
+
+                if (dropdown.options.length > 0) {
+                    let selectedOption = dropdown.options[0];
+                    
+                    // Set the initial price to table_price
+                    let basePrice = parseFloat(selectedOption.value) || 0;
+                    let dineInPrice = parseFloat(selectedOption.getAttribute("data-dinein-price")) || basePrice;
+                    
+                    priceTarget.textContent = dineInPrice.toFixed(2);
+                }
+
+                dropdown.addEventListener("change", function () {
+                    updatePrice(dropdown.id.replace("size-", ""));
+                });
+            });
+
+            // Update prices when order type changes
+            document.querySelectorAll('input[name="order_type"]').forEach(function (radio) {
+                radio.addEventListener("change", function () {
+                    document.querySelectorAll(".size-dropdown").forEach(function (dropdown) {
+                        updatePrice(dropdown.id.replace("size-", ""));
+                    });
+                });
+            });
+        });
+
+
+        let totalPrice = 0;
+        let orderItems = {}; // Store added items
+
+        function updateRowCount() {
+            let rowCount = document.querySelectorAll(".item-row").length;
+            document.getElementById("no_of_rows").value = rowCount;
+        }
+
+        // Function to fetch the correct price based on order type
+        function getSelectedPrice(sizeDropdown) {
+            let selectedOption = sizeDropdown.options[sizeDropdown.selectedIndex];
+            let basePrice = parseFloat(selectedOption.value) || 0;
+            let dineInPrice = parseFloat(selectedOption.getAttribute("data-dinein-price")) || basePrice;
+            let takeawayPrice = parseFloat(selectedOption.getAttribute("data-takeaway-price")) || basePrice;
+
+            let orderType = document.querySelector('input[name="order_type"]:checked')?.value;
+            return orderType === "Takeaway" ? takeawayPrice : dineInPrice;
+        }
+
+        function addToOrder(name, sizeId, qtyId) {
+            let sizeDropdown = document.getElementById(sizeId);
+            let qtyInput = document.getElementById(qtyId);
+
+            if (!sizeDropdown || !qtyInput) return; 
+
+            let selectedPrice = getSelectedPrice(sizeDropdown);
+            let quantity = parseInt(qtyInput.value);
+            let selectedSize = sizeDropdown.options[sizeDropdown.selectedIndex].text;
+            let itemKey = `${name}-${selectedSize}`;
+
+            let orderTable = document.getElementById("orderTableBody");
+            let orderContainer = document.getElementById("orderListContainer");
+
+            if (orderItems[itemKey]) {
+                let existingQtyInput = document.getElementById(`qty-${itemKey}`);
+                existingQtyInput.value = parseInt(existingQtyInput.value) + quantity;
+                updateQuantity(itemKey, selectedPrice);
+                return;
+            }
+
+            let finalPrice = selectedPrice * quantity;
+            orderItems[itemKey] = { name, size: selectedSize, quantity, price: selectedPrice };
+
+            let rowCount = document.querySelectorAll(".item-row").length + 1;
+
+            let row = document.createElement("tr");
+            row.classList.add("item-row"); 
+            row.id = itemKey;
+            row.innerHTML = `
+                <td>            
+                    ${name} (${selectedSize})         
+                    <input type="text" name="item_name_${rowCount}" value="${name}" hidden>
+                    <input type="text" name="item_size_${rowCount}" value="${selectedSize}" hidden>
+                </td> 
+                <td>
+                    <input type="number" name="qty_${rowCount}" id="qty-${itemKey}" class="form-control text-center" value="${quantity}" min="1" 
+                    onkeypress="return false;" onchange="updateQuantity('${itemKey}', ${selectedPrice}, '${rowCount}')">
+                </td>
+                <td>
+                    <span id="price-${itemKey}">${finalPrice.toFixed(2)}</span>
+                    <input type="number" id="price-${itemKey}-input" name="price_${rowCount}" value="${finalPrice.toFixed(2)}" hidden>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-danger" type="button" onclick="removeFromOrder('${itemKey}')">x</button>
+                </td>
+            `;
+
+            orderTable.appendChild(row);
+            updateRowCount();
+
+            recalculateTotal();
+            orderContainer.style.display = "block";
+        }
+
+        // Update quantity and price calculation
+        function updateQuantity(itemKey, unitPrice, rowCount) {
+            let qtyInput = document.getElementById(`qty-${itemKey}`);
+            let priceElement = document.getElementById(`price-${itemKey}`);
+            let priceInput = document.getElementById(`price-${itemKey}-input`); // Corrected selector
+
+            let newQuantity = parseInt(qtyInput.value);
+            if (isNaN(newQuantity) || newQuantity < 1) {
+                qtyInput.value = 1;
+                newQuantity = 1;
+            }
+
+            orderItems[itemKey].quantity = newQuantity;
+            let newPrice = newQuantity * unitPrice;
+
+            priceElement.textContent = newPrice.toFixed(2);
+            if (priceInput) {
+                priceInput.value = newPrice.toFixed(2); 
+            }
+
+            recalculateTotal();
+        }
+
+
+        function removeFromOrder(itemKey) {
+            let item = document.getElementById(itemKey);
+            if (item) {
+                item.remove();
+                delete orderItems[itemKey];
+
+                // Recalculate total price
+                recalculateTotal();
+
+                // Update row names sequentially
+                let rows = document.querySelectorAll(".item-row");
+                rows.forEach((row, index) => {
+                    let newIndex = index + 1;
+
+                    // Update input names inside the row
+                    row.querySelectorAll("input").forEach(input => {
+                        if (input.name.startsWith("item_name_")) {
+                            input.name = `item_name_${newIndex}`;
+                        } else if (input.name.startsWith("item_size_")) {
+                            input.name = `item_size_${newIndex}`;
+                        } else if (input.name.startsWith("qty_")) {
+                            input.name = `qty_${newIndex}`;
+                        } else if (input.name.startsWith("price_")) {
+                            input.name = `price_${newIndex}`;
+                        }
+                    });
+                });
+
+                // Hide order container if empty
+                let orderTable = document.getElementById("orderTableBody");
+                let orderContainer = document.getElementById("orderListContainer");
+                if (orderTable.children.length === 0) {
+                    orderContainer.style.display = "none";
+                }
+            }
+            updateRowCount();
+        }
+
+        function recalculateTotal() {
+            let totalPrice = 0;
+            for (let key in orderItems) {
+                totalPrice += orderItems[key].quantity * orderItems[key].price;
+            }            
+            
+            // Update display and hidden input
+            document.getElementById("totalPriceDisplay").innerText = totalPrice.toFixed(2);
+            document.getElementById("totalPriceInput").value = totalPrice.toFixed(2);
+        }
+
+
+        function filterMenu() {
+            let searchValue = document.getElementById("searchMenu").value.toLowerCase();
+            let categoryValue = document.getElementById("categoryFilter").value;
+            let typeValue = document.getElementById("typeFilter").value;
+            let categories = document.querySelectorAll(".category-title");
+
+            categories.forEach(category => {
+                let categoryContainer = category.nextElementSibling; 
+                let items = categoryContainer.querySelectorAll(".menu-item");
+                let visibleItemCount = 0;
+
+                items.forEach(item => {
+                    let itemName = item.querySelector("h6").textContent.toLowerCase();
+                    let itemCategory = item.getAttribute("data-category");
+                    let itemType = item.getAttribute("data-type");
+
+                    let matchesSearch = itemName.includes(searchValue);
+                    let matchesCategory = categoryValue === "" || itemCategory === categoryValue;
+                    let matchesType = typeValue === "" || itemType === typeValue;
+
+                    if (matchesSearch && matchesCategory && matchesType) {
+                        item.style.display = "block";
+                        visibleItemCount++;
+                    } else {
+                        item.style.display = "none";
+                    }
+                });
+
+               
+                category.style.display = visibleItemCount > 0 ? "block" : "none";
+                categoryContainer.style.display = visibleItemCount > 0 ? "flex" : "none"; 
+            });
+        }
+
+
+        function increaseQuantity(id) {
+            let input = document.getElementById(id);
+            input.value = parseInt(input.value) + 1;
+        }
+
+        function decreaseQuantity(id) {
+            let input = document.getElementById(id);
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+    </script>
+    
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'error' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                var errorAlertElement = document.getElementById('floating-alert-error');
+                var errorMessage = document.getElementById('floating-alert-error-message');
+                errorMessage.textContent = "{{ message|safe }}";
+                errorAlertElement.style.display = 'block';
+                errorAlertElement.classList.add('show');
+
+                setTimeout(function () {
+                    errorAlertElement.classList.remove('show');
+                    errorAlertElement.style.display = 'none';
+                }, 3000); // 2 seconds delay for success alert
+                });                                        
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    
+</body>
+
+</html>
+
+{% endblock content %}

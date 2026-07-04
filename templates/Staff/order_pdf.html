@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Restaurant Receipt</title>
+    <style>
+        @page {
+            size: 80mm 600pt; 
+            margin: 0;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            margin: 0;
+            padding: 5px;
+            width: 80mm;
+            background-color: #f8f8f8;
+        }
+        .ticket {
+            background: #fff;
+            padding: 5px;
+            border-radius: 3px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        h6 {
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .centered {
+            text-align: left;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        td, th {
+            border-bottom: 1px  black dashed;
+            border-style: dashed;
+            padding: 4px;
+            text-align: left;
+            word-wrap: break-word;
+        }
+        th {
+            font-size: 11px;
+            background: #eaeaea;
+            font-weight: bold;
+        }
+        td.right-align {
+            text-align: right;
+        }
+        .total, .amount {
+            font-weight: bold;
+            border-bottom: none !important;
+        }
+        .footer {
+            margin-top: 5px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .tax-text {
+            font-size: 10px;
+            padding-left: 20px;
+            padding-top: -3px;
+        }
+
+        .tax-value {
+            padding-right: 30px; 
+            font-size: 10px;
+            padding-top: -3px;
+        }
+
+        .no-border td {
+            border-bottom: none !important;
+        }
+        .border-space td{
+            border-bottom: none !important;
+            line-height: 1.2; 
+        }
+        .centered{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <h6>{{ restaurant_name }}</h6>
+        <p class="centered">
+            <strong>Order No:</strong> {{ order.order_no }}<br>
+            <strong>Date:</strong> {{ order.order_date }}<br>
+            <strong>Table No:</strong> {{ order.table_no }}
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 48%;">Item</th>
+                    <th style="width: 12%;">QTY</th>
+                    <th style="width: 20%;" class="right-align">Price</th>
+                    <th style="width: 20%;" class="right-align">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order_items %}
+                    <tr>
+                        <td>{{ item.menu_item }} ({{ item.size }})</td>
+                        <td class="right-align">{{ item.quantity }}</td>
+                        <td class="right-align">{{ item.base_price }}</td>
+                        <td class="right-align">{{ item.actual_price }}</td>
+                    </tr>
+                {% endfor %}
+                <tr class="no-border">
+                    <td colspan="2" class="right-align"><strong>Sub Total</strong></td>
+                    <td colspan="2" class="right-align"><strong>{{ taxable_amount|floatformat:2 }}</strong></td>
+                </tr>
+                <tr class="border-space">
+                    <td colspan="2" class="right-align tax-text"><strong>SGST</strong></td>
+                    <td colspan="2" class="right-align tax-value ms-1"><strong>{{ sgst|floatformat:2 }}</strong></td>
+                </tr>
+                <tr class="border-space">
+                    <td colspan="2" class="right-align tax-text"><strong>CGST</strong></td>
+                    <td colspan="2" class="right-align tax-value ms-1"><strong>{{ cgst|floatformat:2 }}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="right-align" style="padding-top: -2px;"><strong>Total Tax</strong></td>
+                    <td colspan="2" class="right-align" style="padding-top: -2px;"><strong>{{ total_tax|floatformat:2 }}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="right-align total"><strong>Total Amount</strong></td>
+                    <td colspan="2" class="right-align total"><strong>{{ order_total_amount|floatformat:2 }}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="right-align amount ">{{ order.amount_in_words }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p class="footer" style="border-top: 1px solid black; margin-top: 5px;">Thank you for dining with us!<br>Visit Again</p>
+
+        <p class="centered">Scan to Pay:</p>
+        <p class="centered">
+            <img src="data:image/png;base64,{{ qr_code }}" alt="UPI QR Code" width="150">
+        </p>
+
+    </div>
+</body>
+</html>

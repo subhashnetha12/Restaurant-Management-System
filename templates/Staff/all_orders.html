@@ -1,0 +1,617 @@
+
+   
+{% extends "Staff/base.html" %}
+
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Category</title>
+    <link rel="stylesheet" href="{% static 'super_admin/css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        /* .dataTables_filter {
+            margin-right: 130px;
+        } */
+         .btn-group{
+            border: solid 1px black;
+         }
+         :root{
+            --dark-text: 61, 61, 61;
+            --content-color: 116, 116, 116;
+            --dashed-line: 232, 232, 232;
+            --theme-color: 242, 169, 62;
+            --theme-color2: 240, 112, 84;
+        }
+        .btn-payment {
+            background-color: transparent;
+            font-weight: bold;
+        }
+        .order-link{
+            color: orange;
+        }
+        .table td, .table th {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .order-detail {
+            color: rgb(39, 125, 42);
+            font-weight: bold;
+            font-size: 1.0rem; /* Adjust for better visibility */
+        }
+        .order-label,
+        .table-label{
+            font-weight: 600;
+            font-size: 20px;
+        }
+        .order-content h5 {
+            color: rgba(var(--dark-text), 1);
+            font-weight: 600;
+            max-width: 80%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-size: calc(16px + 2*(100vw - 320px) / 1600);
+        }
+        #order_title,
+        #order_qty_title,
+        #order_base_title,
+        #order_price_title{
+            font-weight: 600;
+            font-size: medium;
+        }
+        .order-price,
+        .order-qty,
+        .order-title {
+            font-weight: 400;
+            color: rgba(var(--dark-text), 1);
+            font-size: calc(16px + 4*(100vw - 320px) / 1600);
+        }
+        .order-size {
+            font-size: calc(14px + 2*(100vw - 320px) / 1600);
+            font-weight: 400;
+            color: rgba(var(--content-color), 1);
+        }
+        .order-content .d-flex {
+            display: flex;
+            justify-content: space-between;
+            gap: 40px; /* Adjust spacing */
+            width: 100%;
+        }
+        .order-name {
+            flex: 2;  /* Gives more space to the name */
+            text-align: left; /* Aligns the name to the left */
+        }
+        .order-qty,
+        .order-price {
+            flex: 1; /* Keeps quantity and price equally spaced */
+            text-align: center;
+        }
+        .checkout-detail li + li {
+            border-top: 1px solid rgba(var(--dashed-line), 1);
+            padding-top: 10px;
+            margin-top: 6px;
+        }
+        .checkout-detail h5 {
+            font-weight: 400;
+            font-size: calc(15px + 5*(100vw - 320px) / 1600);
+            line-height: 1.5;
+            margin-bottom: 0;
+            color: rgba(var(--dark-text), 1) !important;
+        }
+        .checkout-detail .grand-total {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: calc(5px + 5*(100vw - 991px) / 929);
+            border-top: 1px solid rgba(var(--dark-text), 0.15);
+            padding: 10px 0 0;
+        }
+        .content-color {
+            color: rgba(var(--content-color), 1) !important;
+        }
+        .checkout-detail .grand-total h6 {
+            color: rgba(var(--dark-text), 1);
+            font-size: calc(16px + 4*(100vw - 320px) / 1600);
+        }
+        .amount-word {
+            padding: 10px 0 0;
+            color: rgba(var(--dark-text), 1);
+            font-weight: 600;
+        }
+
+        .restaurant-btn {
+            padding: calc(10px + 5*(100vw - 320px) / 1600) 0;
+            margin-top: calc(10px + 20*(100vw - 320px) / 1600);
+            text-transform: uppercase;
+        }
+        .theme-btn {
+            color: #fff;
+            background-color: rgba(var(--theme-color), 1);
+            border-radius: 4px;
+            background: linear-gradient(to right, rgba(var(--theme-color), 1), rgba(var(--theme-color2), 1));
+            border: none;
+            border-radius: 100px;
+        }
+        .theme-btn:active{
+            color: #fff;
+            background-color: rgba(var(--theme-color), 1);
+            border-radius: 4px;
+            background: linear-gradient(to right, rgba(var(--theme-color), 1), rgba(var(--theme-color2), 1));
+        }
+        #modalTotal {
+            padding-left: 20px; /* Adjust the negative value to move left */
+        }
+
+
+
+        @media (max-width: 778px) {
+            .modal-dialog {
+                max-width: 100%;
+            }
+        }
+
+        
+        .status {
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 9999px;
+        }
+
+        .status-green {
+            background-color: #c6f6d5;
+            color: #2f855a;
+        }
+
+        .status-blue {
+            background-color: #bee3f8;
+            color: #2b6cb0;
+        }
+        .status-red {
+            background-color: #ff9d9d;
+            color: #b02b2b;
+        }
+        .status-yellow {
+            color: rgb(186, 186, 36); 
+            background-color: #ffffbc; 
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container-fluid table-container display responsive wrap fade-in">
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+    
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+    
+        <div class="d-flex align-items-center position-relative">
+            <div id="dataTables_filter_container" class="me-2"></div>
+        </div>
+    
+        <!-- Filters -->
+        <div class="d-flex justify-content-between mb-3">
+            <!-- Date Filters -->
+            <div class="btn-group" id="date-filter">
+                <button class="btn btn-dark active" data-filter="day">Day</button>
+                <button class="btn btn-outline-dark" data-filter="week">Week</button>
+                <button class="btn btn-outline-dark" data-filter="month">Month</button>
+                <button class="btn btn-outline-dark" data-filter="all">All</button>
+            </div>
+    
+            <!-- Status Filters -->
+            <div class="btn-group" id="status-filter">
+                <button class="btn btn-dark active" data-filter="pending">Pending</button>
+                <button class="btn btn-outline-dark" data-filter="cancelled">Cancelled</button>
+                <button class="btn btn-outline-dark" data-filter="served">Served</button>
+                <button class="btn btn-outline-dark" data-filter="completed">Completed</button>
+                <button class="btn btn-outline-dark" data-filter="all">All</button>
+            </div>
+        </div>
+    
+        <!-- Order Table -->
+        <div class="table-responsive">
+            <table class="table" id="form-data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">S.No</th>
+                        <th scope="col">Order No</th>
+                        <th scope="col">Table No</th>
+                        <th scope="col">Order Type</th>
+                        <th scope="col">Order date</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="order-table-body">
+                    {% for i in all_order %}
+                        <tr class="order-row" data-status="{{ i.status|lower }}">
+                            <td>{{ forloop.counter }}</td>
+                            <td><a href="#" class="order-link" data-bs-toggle="modal" data-bs-target="#AdminModal-{{ i.order_no }}">{{ i.order_no }}</a></td>
+                            <td>{{ i.table_no }}</td>
+                            <td>{{ i.order_type }}</td>
+                            <td id="order-date-{{ i.order_no }}">{{ i.order_date|date:'d-m-Y' }}</td>
+                            <td>
+                                <span class="status 
+                                    {% if i.status == 'Completed' %} status-green 
+                                    {% elif i.status == 'Pending' %} status-red 
+                                    {% elif i.status == 'Ready for Pickup' %} status-yellow 
+                                    {% elif i.status == 'Served' %} status-yellow 
+                                    {% else %} status-blue {% endif %}">
+                                    {{ i.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if i.status == "Pending" %}
+                                    <a href="{% url 'addmore_items' i.order_no %}" class="btn-edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="#" class="btn-cancel ms-3" data-href="{% url 'cancel_order' i.order_no %}">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                {% elif i.status == "Served" %}
+                                    <a href="{% url 'addmore_items' i.order_no  %}" class="btn-edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="#" class="btn-payment ms-3" data-bs-toggle="modal" data-bs-target="#paymentModal-{{ i.order_no }}">
+                                        <i class="fas fa-credit-card"></i>
+                                    </a>
+                                {% elif i.status == "Ready for Pickup" %}
+                                    <a href="{% url 'addmore_items' i.order_no  %}" class="btn-edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="#" class="btn-payment ms-3" data-bs-toggle="modal" data-bs-target="#paymentModal-{{ i.order_no }}">
+                                        <i class="fas fa-credit-card"></i>
+                                    </a>    
+                                {% elif i.status == "Completed" %}
+
+                                    {% for pdf in pdf_records %}
+                                       {% if i.order_no == pdf.order_no %}
+                                        <a href="{{ pdf.pdf_file.url }}"  target="_blank" class="btn-view">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% for i in all_order %}
+    <div class="modal fade" id="paymentModal-{{ i.order_no }}" tabindex="-1" aria-labelledby="paymentModalLabel-{{ i.order_no }}" aria-hidden="true" data-bs-backdrop="true" >
+        <div class="modal-dialog modal-lg" >
+            <div class="modal-content container-custom">
+                <!-- Modal Header -->
+                <div class="modal-header"> 
+                    <h3 class="fw-semibold dark-text checkout-title">Order Summery</h3>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="paymentForm" method="post" action="#">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-lg-7 col-sm-12 order-label">
+                                <label class="fw-semibold">Order No:</label>
+                                <span class="order-detail" id="modalOrderNo">{{ i.order_no }}</span>  <!-- Dynamic Order No -->
+                            </div>
+                            <div class="col-lg-5 col-sm-12 table-label">
+                                <label class="fw-semibold">Table No:</label>
+                                <span class="order-detail" id="modalTableNo">{{ i.table_no }}</span>  <!-- Dynamic Table No -->
+                            </div>
+                        </div>
+                        
+                        <div class="order-summery-section sticky-top">
+                            <div class="checkout-detail">
+                                <ul>
+                                    <li>
+                                        <div class="horizontal-product-box">
+                                            <div class="order-content">
+                                                <div class="d-flex text-center">
+                                                    <h5 class="order-name" id="order_title">Order Name</h5>
+                                                    <h6 class="order-qty" id="order_qty_title">Quantity</h6>
+                                                    <h6 class="order-price" id="order_base_title"> Unit Price</h6>
+                                                    <h6 class="order-price" id="order_price_title"> Price</h6>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    {% for j in orders_details %}
+                                        {% if j.order_no == i.order_no %}
+                                            <li>
+                                                <div class="horizontal-product-box">
+                                                    <div class="order-content">
+                                                        <div class="d-flex text-center">
+                                                            <h5 class="order-name" id="order-name_{{ forloop.counter }}">{{ j.menu_item }}</h5>
+                                                            <h6 class="order-qty" id="modalQty_{{ forloop.counter }}">{{ j.quantity }}</h6>
+                                                            <h6 class="order-price" id="base_price_{{ forloop.counter }}">{{ j.base_price}}</h6>
+                                                            <h6 class="order-price" id="total_price_{{ forloop.counter }}">{{ j.price }}</h6>
+                                                        </div>
+                                                        <h6 class="order-size" id="order_size_{{ forloop.counter }}">{{ j.size }}</h6>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                                
+                                <h5 class="fw-semibold dark-text pt-3 pb-3">Bill Details</h5>
+                                <div class="grand-total">
+                                    <h6 class="fw-semibold dark-text">Total</h6>
+                                    <h6 class="fw-semibold dark-text"></h6>
+                                    <h6 class="fw-semibold dark-text"></h6>
+                                    <h6 class="fw-semibold amount" id="modalTotal">{{i.total_amount}}</h6>
+                                </div>
+                                <div class="amount-word">
+                                    <h6 class="fw-semibold dark-text">{{ i.amount_in_words }}</h6>
+                                </div>
+                                <a href="{% url 'order_invoice' i.order_no %}" class="btn theme-btn restaurant-btn w-100 rounded-2" target="_blank" rel="noopener noreferrer">PAY NOW</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %} 
+
+    
+    {% for i in all_order %}
+        <div class="modal fade" id="AdminModal-{{i.order_no}}" tabindex="-1" aria-labelledby="AdminModalLabel-{{i.order_no}}" aria-hidden="true"  data-bs-backdrop="true" >
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content container-custom">
+                   
+                    <div class="modal-header">
+                        <h4 class="modal-title">Order Items</h4>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="modal-body">
+
+                        <ul class="list-unstyled">
+                            
+                            <div class="checkout-detail">
+                                <ul>
+                                    <li>
+                                        <div class="horizontal-product-box">
+                                            <div class="order-content">
+                                                <div class="d-flex text-center">
+                                                    <h5 class="order-name" id="order_title">Order Name</h5>
+                                                    <h6 class="order-qty" id="order_qty_title">Quantity</h6>
+                                                    <h6 class="order-price" id="order_base_title"> Base Price</h6>
+                                                    <h6 class="order-price" id="order_price_title"> Price</h6>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    {% for j in orders_details %}
+                                        {% if j.order_no == i.order_no %}
+                                            <li>
+                                                <div class="horizontal-product-box">
+                                                    <div class="order-content">
+                                                        <div class="d-flex text-center">
+                                                            <h5 class="order-name" id="order-name_{{ forloop.counter }}">{{ j.menu_item }}</h5>
+                                                            <h6 class="order-qty" id="modalQty_{{ forloop.counter }}">{{ j.quantity }}</h6>
+                                                            <h6 class="order-price" id="base_price_{{ forloop.counter }}">{{ j.base_price}}</h6>
+                                                            <h6 class="order-price" id="total_price_{{ forloop.counter }}">{{ j.price }}</h6>
+                                                        </div>
+                                                        <h6 class="order-size" id="order_size_{{ forloop.counter }}">{{ j.size }}</h6>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                                
+                                <h5 class="fw-semibold dark-text pt-3 pb-3">Bill Details</h5>
+                                <div class="grand-total">
+                                    <h6 class="fw-semibold dark-text">Total</h6>
+                                    <h6 class="fw-semibold dark-text"></h6>
+                                    <h6 class="fw-semibold dark-text"></h6>
+                                    <h6 class="fw-semibold amount" id="modalTotal">{{i.total_amount}}</h6>
+                                </div>
+                                <div class="amount-word">
+                                    <h6 class="fw-semibold dark-text">{{ i.amount_in_words }}</h6>
+                                </div>
+                            </div>
+                        </ul>
+                       
+                    </div>
+                </div>
+            </div>
+        </div> 
+    {% endfor %}
+
+  
+    <script>
+        document.addEventListener("hidden.bs.modal", function (event) {
+            document.body.classList.remove("modal-open");
+            document.querySelector(".modal-backdrop")?.remove();
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const payNowButtons = document.querySelectorAll(".restaurant-btn");
+
+            payNowButtons.forEach(button => {
+                button.addEventListener("click", function (event) {
+                    event.preventDefault(); // Prevents immediate navigation
+                    const url = this.href; // Gets the invoice URL
+                    
+                    window.open(url, "_blank");
+
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000); 
+                });
+            });
+        });
+
+    </script>
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'error' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                var errorAlertElement = document.getElementById('floating-alert-error');
+                var errorMessage = document.getElementById('floating-alert-error-message');
+                errorMessage.textContent = "{{ message|safe }}";
+                errorAlertElement.style.display = 'block';
+                errorAlertElement.classList.add('show');
+
+                setTimeout(function () {
+                    errorAlertElement.classList.remove('show');
+                    errorAlertElement.style.display = 'none';
+                }, 3000); // 2 seconds delay for success alert
+                });                                        
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="{% static 'super_admin/js/index2.js' %}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteButtons = document.querySelectorAll('.btn-cancel');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function (event) {
+                    event.preventDefault(); 
+                    const deleteUrl = this.getAttribute('data-href'); 
+
+                    Swal.fire({
+                        title: 'Are you sure,?',
+                        text: "You want cancel this order ,This action cannot be undone!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, Cancel it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = deleteUrl;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const dateFilterBtns = document.querySelectorAll("#date-filter button");
+            const statusFilterBtns = document.querySelectorAll("#status-filter button");
+            const tableRows = document.querySelectorAll(".order-row");
+
+            let selectedDateFilter = "day";
+            let selectedStatusFilter = "all";
+
+            function parseDate(dateString) {
+                const parts = dateString.split("-");
+                if (parts.length === 3) {
+                    return new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+                return NaN;
+            }
+
+            function filterTable() {
+                const today = new Date();
+                tableRows.forEach(row => {
+                    const status = row.getAttribute("data-status");  
+                    const orderNo = row.querySelector("td:nth-child(2)").innerText.trim(); // Get order_no to find the specific ID
+                    const orderDateText = document.querySelector(`#order-date-${orderNo}`).innerText.trim(); // Fetch date using ID
+                    const orderDate = parseDate(orderDateText);
+
+                    let showByDate = selectedDateFilter === "day";
+
+                    if (!isNaN(orderDate.getTime())) {
+                        if (selectedDateFilter === "day") {
+                            showByDate = orderDate.toDateString() === today.toDateString();
+                        } else if (selectedDateFilter === "week") {
+                            const lastWeek = new Date();
+                            lastWeek.setDate(today.getDate() - 7);
+                            showByDate = orderDate >= lastWeek && orderDate <= today;
+                        } else if (selectedDateFilter === "month") {
+                            showByDate = orderDate.getMonth() === today.getMonth() && orderDate.getFullYear() === today.getFullYear();
+                        }
+                    }
+
+                    const showByStatus = selectedStatusFilter === "all" || status === selectedStatusFilter;
+                    row.style.display = showByDate && showByStatus ? "" : "none";
+                });
+            }
+
+            dateFilterBtns.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    dateFilterBtns.forEach(b => b.classList.remove("btn-dark", "text-white"));
+                    this.classList.add("btn-dark", "text-white");
+                    selectedDateFilter = this.getAttribute("data-filter");
+                    filterTable();
+                });
+            });
+
+            statusFilterBtns.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    statusFilterBtns.forEach(b => b.classList.remove("btn-dark", "text-white"));
+                    this.classList.add("btn-dark", "text-white");
+                    selectedStatusFilter = this.getAttribute("data-filter");
+                    filterTable();
+                });
+            });
+
+            filterTable();
+        });
+
+    </script>
+
+</body>
+
+</html>
+
+{% endblock content %}
+
+

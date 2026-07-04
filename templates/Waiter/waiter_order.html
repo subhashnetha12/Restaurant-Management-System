@@ -1,0 +1,671 @@
+{% include 'Waiter/base.html' %}
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Restaurant Orders</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        .menu-item img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            border-radius: 8px;
+            transition: transform 0.3s ease-in-out;
+        }
+    
+        .menu-item img:hover {
+            transform: scale(1.05);
+        }
+    
+        .card {
+            padding: 10px;
+            border-radius: 10px;
+        }
+    
+        .select-container {
+            position: relative;
+        }
+
+        .select-container label {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            font-size: 14px;
+            font-weight: bold;
+            color: #000000;
+            pointer-events: none;
+        }
+
+        .select-container .form-select {
+            width:100% ;
+            padding-left: 45px;
+            font-size: 14px;
+            height: 30px;
+        }
+
+        .quantity-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px 10px;
+            width: 100%;
+            background: white;
+        }
+
+        .quantity-btn {
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #5a5a5a;
+        }
+
+        .quantity-btn:disabled {
+            color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            background: transparent;
+        }
+
+        .btn-primary {
+            font-size: 12px;
+            padding: 5px 8px;
+        }
+    
+        #menuItems {
+            height: 70vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    
+        #orderListContainerModal {
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    
+        #orderListContainerModal table {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            table-layout: fixed;
+            width: 100%;
+            word-wrap: break-word;
+        }
+    
+        #orderListContainerModal th,
+        #orderListContainerModal td {
+            text-align: left;
+            word-break: break-word;
+            max-width: 100px;
+        }
+    
+        #orderListContainerModal h6 {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    
+        .form-control {
+            border: none;
+            padding: 5px 5px 5px 10px;
+        }
+    
+        .form-control:focus {
+            border: none;
+            box-shadow: none;
+        }
+
+    
+        .view-selected-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+
+        /* Modal styles */
+        .modal-header {
+            padding: 0.5rem 1rem;
+            background-color: #F07054;
+            color: #ffff;
+        }
+
+        .modal-body {
+            padding-top: 25px;
+            border: 1px solid #dbdbdb;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .modal-title {
+            font-weight: bold;
+        }
+
+
+        .toast-notification {
+            position: absolute;
+            background-color: #252b24;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 14px;
+            opacity: 0.95;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .flying-icon {
+            position: fixed;
+            font-size: 35px; 
+            color: #28a745;
+            z-index: 2000;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            transition:
+                transform 1.8s cubic-bezier(0.25, 1, 0.5, 1),
+                opacity 0.8s ease 1.0s; /* fade starts after 1.2s */
+        }
+
+    </style>
+    
+    <div class="container mt-4">
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+    
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+    
+        <!-- Filters -->
+        <div class="d-flex flex-column flex-md-row gap-2 mb-3">
+            <input type="text" id="searchMenu" class="form-control" placeholder="Search menu items..." onkeyup="filterMenu()">
+            <select id="categoryFilter" class="form-select" onchange="filterMenu()">
+                <option value="">All Categories</option>
+                {% for category in cat_det %}
+                <option value="{{ category.name }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <select id="typeFilter" class="form-select" onchange="filterMenu()">
+                <option value="">All Types</option>
+                <option value="Veg">Veg</option>
+                <option value="Non-Veg">Non-Veg</option>
+            </select>
+        </div>
+    
+        <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-dark d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#selectedItemsModal">
+                <span>View Selected Items</span>
+                <span class="badge bg-danger" id="selectedItemCount">0</span>
+            </button>
+        </div>
+    
+        <!-- MENU ITEMS SECTION -->
+    <div id="menuItems">
+        {% for category in cat_det %}
+            <h6 class="category-title mt-3">{{ category.name }}</h6>
+            <div class="row g-3">
+                {% for item in all_menuitems %}
+                    {% if item.category == category.name %}
+                    <div class="col-lg-3 col-md-4 col-12 menu-item" data-category="{{ item.category }}" data-type="{{ item.type }}">
+                        <div class="card p-2 h-100">
+                            <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}">
+                            <div class="card-body text-center">
+                                <h6 class="mb-1"><strong>{{ item.name }}</strong></h6>
+                                <p class="mb-0">Price: Rs. <span id="price-{{ item.name|slugify }}"></span></p>
+                            </div>
+
+                            <!-- Size -->
+                            <div class="select-container mb-1">
+                                <label for="size-{{ item.name|slugify }}">Size:</label>
+                                <select class="form-select form-select-sm size-dropdown"
+                                        id="size-{{ item.name|slugify }}"
+                                        data-price-target="price-{{ item.name|slugify }}"
+                                        onchange="updatePrice('{{ item.name|slugify }}')">
+                                    {% for detail in menuitems_det %}
+                                        {% if detail.name == item.name %}
+                                        <option value="{{ detail.price }}" data-dinein-price="{{ detail.table_price }}">
+                                            {{ detail.size }}
+                                        </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Quantity -->
+                            <div class="quantity-container mb-1 px-2">
+                                <label class="fw-bold">Qty:</label>
+                                <div class="d-flex align-items-center">
+                                    <button class="quantity-btn" type="button" onclick="decreaseQuantity('qty-{{ item.name|slugify }}')">-</button>
+                                    <input type="number" class="quantity-input mx-2" id="qty-{{ item.name|slugify }}" value="1" min="1" readonly>
+                                    <button class="quantity-btn" type="button" onclick="increaseQuantity('qty-{{ item.name|slugify }}')">+</button>
+                                </div>
+                            </div>
+
+                            <!-- Add Button -->
+                            <div class=" mb-2">
+                                <button class="btn btn-primary w-100"
+                                    onclick="handleAddClick(this, '{{ item.name }}', 'size-{{ item.name|slugify }}', 'qty-{{ item.name|slugify }}')">
+                                    Add
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+    <!-- SELECTED ITEMS MODAL -->
+    <div class="modal fade" id="selectedItemsModal" tabindex="-1" aria-labelledby="selectedItemsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="selectedItemsModalLabel">Selected Items</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+
+                    <div class="modal-body">
+
+                        <div id="tableSelectionModal">
+                            {% if request.GET.table_no %}
+                            <h6 class="mb-3">Selected Table: <strong>{{ request.GET.table_no }}</strong></h6>
+                            <input type="hidden" name="table_no" value="{{ request.GET.table_no }}">
+                            {% else %}
+                            <label for="tableSelectModal" class="form-label">Table Selection</label>
+                            <select id="tableSelectModal" name="table_no" class="form-select mb-3">
+                                <option value="">Select Table</option>
+                                {% for table in tables %}
+                                <option value="{{ table.table_no }}">{{ table.table_no }}</option>
+                                {% endfor %}
+                            </select>
+                            {% endif %}
+                        </div>
+
+                        <input type="number" name="no_of_rows" id="no_of_rows" hidden>
+
+                        <div id="orderListContainer">
+                            <table class="table table-bordered mb-2">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 45%;">Item</th>
+                                        <th style="width: 19%;">Qty</th>
+                                        <th style="width: 20%;">Price(Rs)</th>
+                                        <th style="width: 16%;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orderTableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <h6>Total Price: Rs.<span id="totalPriceDisplay">0.00</span></h6>
+                        <input type="number" name="totalPrice" id="totalPriceInput" hidden>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-success w-100" type="submit">Place Order</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+        
+        
+    <script>
+        function handleAddClick(button, name, sizeId, qtyId) {
+            addToOrder(name, sizeId, qtyId);
+        
+            setTimeout(() => {
+                animateToSelectedButtonFromButton(button);
+                showItemAddedToast(name);
+            }, 50);
+        }
+        function showItemAddedToast(itemName) {
+            const target = document.querySelector('[data-bs-target="#selectedItemsModal"]');
+            if (!target) return;
+
+            document.querySelectorAll(".toast-notification").forEach(el => el.remove());
+
+            const toast = document.createElement("div");
+            toast.className = "toast-notification";
+            toast.textContent = `${itemName} added to order`;
+
+            const rect = target.getBoundingClientRect();
+            toast.style.top = `${rect.top + window.scrollY - 40}px`; 
+            toast.style.left = `${rect.left + window.scrollX}px`;
+
+            document.body.appendChild(toast);
+
+            // Fade out and remove
+            setTimeout(() => {
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+            }, 2200);
+        }
+
+        
+        function animateToSelectedButtonFromButton(buttonEl) {
+            const target = document.querySelector('[data-bs-target="#selectedItemsModal"]');
+            if (!buttonEl || !target) return;
+        
+            const sourceRect = buttonEl.getBoundingClientRect();
+            const targetRect = target.getBoundingClientRect();
+        
+            const floatingIcon = document.createElement("div");
+            floatingIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
+            floatingIcon.classList.add('flying-icon');
+            floatingIcon.style.top = `${sourceRect.top + window.scrollY + sourceRect.height / 2}px`;
+            floatingIcon.style.left = `${sourceRect.left + window.scrollX + sourceRect.width / 2}px`;
+        
+            document.body.appendChild(floatingIcon);
+        
+            const deltaX = (targetRect.left + targetRect.width / 2) - (sourceRect.left + sourceRect.width / 2);
+            const deltaY = (targetRect.top + targetRect.height / 2) - (sourceRect.top + sourceRect.height / 2);
+        
+            requestAnimationFrame(() => {
+                floatingIcon.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
+                floatingIcon.style.opacity = "0";
+            });
+        
+            setTimeout(() => floatingIcon.remove(), 3000); // increased to match new animation duration
+        }
+    </script>
+        
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".size-dropdown").forEach(function (dropdown) {
+            const priceTargetId = dropdown.getAttribute("data-price-target");
+            const priceTarget = document.getElementById(priceTargetId);
+
+            if (dropdown.options.length > 0) {
+                const selectedOption = dropdown.options[0];
+                const finalPrice = parseFloat(selectedOption.getAttribute("data-dinein-price")) || parseFloat(selectedOption.value) || 0;
+                if (priceTarget) {
+                    priceTarget.textContent = finalPrice.toFixed(2);
+                }
+            }
+
+            dropdown.addEventListener("change", function () {
+                updatePrice(dropdown.id.replace("size-", ""));
+            });
+        });
+    });
+
+    let orderItems = {};
+
+    function updatePrice(slugifiedName) {
+        let dropdown = document.getElementById(`size-${slugifiedName}`);
+        let priceTarget = document.getElementById(`price-${slugifiedName}`);
+
+        if (dropdown && priceTarget) {
+            let selectedOption = dropdown.options[dropdown.selectedIndex];
+            let finalPrice = parseFloat(selectedOption.getAttribute("data-dinein-price")) || parseFloat(selectedOption.value) || 0;
+            priceTarget.textContent = finalPrice.toFixed(2);
+        }
+    }
+
+
+    function updateRowCount(isModalOpen = false) {
+        const rowCounterInput = isModalOpen ? "no_of_rows_modal" : "no_of_rows";
+        const tableId = isModalOpen ? "#orderTableBodyModal" : "#orderTableBody";
+        const rowCount = document.querySelectorAll(`${tableId} .item-row`).length;
+        document.getElementById(rowCounterInput).value = rowCount;
+    }
+
+    function getSelectedPrice(sizeDropdown) {
+        let selectedOption = sizeDropdown.options[sizeDropdown.selectedIndex];
+        return parseFloat(selectedOption.getAttribute("data-dinein-price")) || parseFloat(selectedOption.value) || 0;
+    }
+
+    function addToOrder(name, sizeId, qtyId) {
+        let sizeDropdown = document.getElementById(sizeId);
+        let qtyInput = document.getElementById(qtyId);
+        if (!sizeDropdown || !qtyInput) return;
+
+        let selectedPrice = getSelectedPrice(sizeDropdown);
+        let quantity = parseInt(qtyInput.value);
+        let selectedSize = sizeDropdown.options[sizeDropdown.selectedIndex].text;
+        let itemKey = `${name}-${selectedSize}`;
+
+        let isModalOpen = document.querySelector('#selectedItemsModal.show');
+        let orderTable = isModalOpen ? document.getElementById("orderTableBodyModal") : document.getElementById("orderTableBody");
+        let orderContainer = isModalOpen ? document.getElementById("orderListContainerModal") : document.getElementById("orderListContainer");
+        let rowCounterInput = isModalOpen ? "no_of_rows_modal" : "no_of_rows";
+
+        if (orderItems[itemKey]) {
+            let existingQtyInput = document.getElementById(`qty-${itemKey}`);
+            existingQtyInput.value = parseInt(existingQtyInput.value) + quantity;
+            updateQuantity(itemKey, selectedPrice, null, isModalOpen);
+            return;
+        }
+
+        let finalPrice = selectedPrice * quantity;
+        orderItems[itemKey] = { name, size: selectedSize, quantity, price: selectedPrice };
+
+        let rowCount = document.querySelectorAll(`${isModalOpen ? "#orderTableBodyModal" : "#orderTableBody"} .item-row`).length + 1;
+
+        let row = document.createElement("tr");
+        row.classList.add("item-row", "fade-in");
+        row.id = itemKey;
+        row.innerHTML = `
+            <td>
+                ${name} (${selectedSize})
+                <input type="text" name="item_name_${rowCount}" value="${name}" hidden>
+                <input type="text" name="item_size_${rowCount}" value="${selectedSize}" hidden>
+            </td>
+            <td>
+                <input type="number" name="qty_${rowCount}" id="qty-${itemKey}" class="form-control text-center" value="${quantity}" min="1"
+                onchange="updateQuantity('${itemKey}', ${selectedPrice}, ${rowCount}, ${isModalOpen})">
+            </td>
+            <td>
+                <span id="price-${itemKey}">${finalPrice.toFixed(2)}</span>
+                <input type="number" id="price-${itemKey}-input" name="price_${rowCount}" value="${finalPrice.toFixed(2)}" hidden>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-danger" type="button" onclick="removeFromOrder('${itemKey}', ${isModalOpen})">×</button>
+            </td>
+        `;
+
+        orderTable.appendChild(row);
+        updateRowCount(isModalOpen);
+        recalculateTotal(isModalOpen);
+        orderContainer.style.display = "block";
+
+        document.getElementById("selectedItemCount").textContent = document.getElementById("orderTableBody").rows.length;
+    }
+
+    function updateQuantity(itemKey, unitPrice, rowCount = null, isModalOpen = false) {
+        let qtyInput = document.getElementById(`qty-${itemKey}`);
+        let priceElement = document.getElementById(`price-${itemKey}`);
+        let priceInput = document.getElementById(`price-${itemKey}-input`);
+
+        let newQuantity = parseInt(qtyInput.value);
+        if (isNaN(newQuantity) || newQuantity < 1) {
+            qtyInput.value = 1;
+            newQuantity = 1;
+        }
+
+        orderItems[itemKey].quantity = newQuantity;
+        let newPrice = newQuantity * unitPrice;
+
+        priceElement.textContent = newPrice.toFixed(2);
+        if (priceInput) priceInput.value = newPrice.toFixed(2);
+
+        recalculateTotal(isModalOpen);
+    }
+
+    function removeFromOrder(itemKey, isModalOpen = false) {
+        let item = document.getElementById(itemKey);
+        if (item) {
+            item.remove();
+            delete orderItems[itemKey];
+
+            let tableId = isModalOpen ? "orderTableBodyModal" : "orderTableBody";
+            let containerId = isModalOpen ? "orderListContainerModal" : "orderListContainer";
+            let rowCounterInput = isModalOpen ? "no_of_rows_modal" : "no_of_rows";
+
+            const rows = document.querySelectorAll(`#${tableId} .item-row`);
+            rows.forEach((row, index) => {
+                const newIndex = index + 1;
+                row.querySelectorAll("input").forEach(input => {
+                    if (input.name.includes("item_name_")) input.name = `item_name_${newIndex}`;
+                    if (input.name.includes("item_size_")) input.name = `item_size_${newIndex}`;
+                    if (input.name.includes("qty_")) input.name = `qty_${newIndex}`;
+                    if (input.name.includes("price_")) input.name = `price_${newIndex}`;
+                });
+            });
+
+            document.getElementById(rowCounterInput).value = rows.length;
+
+            if (rows.length === 0) {
+                document.getElementById(containerId).style.display = "none";
+            }
+
+            recalculateTotal(isModalOpen);
+            document.getElementById("selectedItemCount").textContent = document.getElementById("orderTableBody").rows.length;
+        }
+    }
+
+    function recalculateTotal(isModalOpen = false) {
+        let total = 0;
+        for (let key in orderItems) {
+            total += orderItems[key].quantity * orderItems[key].price;
+        }
+
+        const totalDisplayId = isModalOpen ? "totalPriceDisplayModal" : "totalPriceDisplay";
+        const totalInputId = isModalOpen ? "totalPriceInputModal" : "totalPriceInput";
+
+        document.getElementById(totalDisplayId).innerText = total.toFixed(2);
+        document.getElementById(totalInputId).value = total.toFixed(2);
+    }
+
+
+
+
+        function filterMenu() {
+            let searchValue = document.getElementById("searchMenu").value.toLowerCase();
+            let categoryValue = document.getElementById("categoryFilter").value;
+            let typeValue = document.getElementById("typeFilter").value;
+            let categories = document.querySelectorAll(".category-title");
+
+            categories.forEach(category => {
+                let categoryContainer = category.nextElementSibling; 
+                let items = categoryContainer.querySelectorAll(".menu-item");
+                let visibleItemCount = 0;
+
+                items.forEach(item => {
+                    let itemName = item.querySelector("h6").textContent.toLowerCase();
+                    let itemCategory = item.getAttribute("data-category");
+                    let itemType = item.getAttribute("data-type");
+
+                    let matchesSearch = itemName.includes(searchValue);
+                    let matchesCategory = categoryValue === "" || itemCategory === categoryValue;
+                    let matchesType = typeValue === "" || itemType === typeValue;
+
+                    if (matchesSearch && matchesCategory && matchesType) {
+                        item.style.display = "block";
+                        visibleItemCount++;
+                    } else {
+                        item.style.display = "none";
+                    }
+                });
+
+               
+                category.style.display = visibleItemCount > 0 ? "block" : "none";
+                categoryContainer.style.display = visibleItemCount > 0 ? "flex" : "none"; 
+            });
+        }
+
+
+        function increaseQuantity(id) {
+            let input = document.getElementById(id);
+            input.value = parseInt(input.value) + 1;
+        }
+
+        function decreaseQuantity(id) {
+            let input = document.getElementById(id);
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+    </script>
+    
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'error' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                var errorAlertElement = document.getElementById('floating-alert-error');
+                var errorMessage = document.getElementById('floating-alert-error-message');
+                errorMessage.textContent = "{{ message|safe }}";
+                errorAlertElement.style.display = 'block';
+                errorAlertElement.classList.add('show');
+
+                setTimeout(function () {
+                    errorAlertElement.classList.remove('show');
+                    errorAlertElement.style.display = 'none';
+                }, 3000); // 2 seconds delay for success alert
+                });                                        
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    
+</body>
+
+</html>

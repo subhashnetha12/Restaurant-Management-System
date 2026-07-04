@@ -1,0 +1,265 @@
+{% extends "Rest-Admin/base.html" %}
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <title>Restaurant Profile</title>
+    <style>
+        body {
+            background-color: #eaeaea;
+        }
+        .main-body {
+            padding: 20px;
+            align-items: center;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            align-items: center;
+        }
+        .card-body{
+            min-width: 800px;
+        }
+        .text-header {
+            color: #414141;
+            font-weight: bold;
+        }
+        .btn-custom {
+            font-weight: 600;
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-edit {
+            background-color: #99ff5d;
+        }
+        .btn-edit:hover {
+            background-color: #53ff31;
+        }
+        .btn-save {
+            background-color: #f2953e;
+            display: none;
+        }
+        .btn-save:hover {
+            background-color: #ff451b;
+        }
+        .disable-input {
+            background-color: transparent !important;  
+            border: none; 
+        }
+
+        .enable-input {
+            background-color: white !important; 
+            border: 1px solid #ced4da; 
+        }
+        .title{
+            text-align: center;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+        <div class="main-body">
+            <div class="row justify-content-center">
+                <div class="col-md-12">
+                    <div class="card">
+                        <h3 class="title mt-3">Restaurant Information</h3>
+                        <div class="card-body">
+                            <form method="POST" id="restaurantForm">
+                                {% csrf_token %}
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">Restaurant Name</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="text" name="name" id="name" value="{{ restaurant.name|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">Email</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="email" name="email" id="email" value="{{ restaurant.email|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">Phone Number</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="text" name="phone" id="phone" value="{{ restaurant.phone_number|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">Mobile Number</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="text" name="mobile" id="mobile" value="{{ restaurant.mobile_number|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">Address 1</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="text" name="address1" id="address1" value="{{ restaurant.address1|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">Address 2</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="text" name="address2" id="address2" value="{{ restaurant.address2|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">City</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="text" name="city" id="city" value="{{ restaurant.city|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">State</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="text" name="state" id="state" value="{{ restaurant.state|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">Postal Code</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="number" name="postal_code" id="postal_code" value="{{ restaurant.postal_code|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">GST Number</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="text" name="gst_no" id="gst_no" value="{{ restaurant.gst_no|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">Payee Name</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="text" name="pay_name" id="pay_name" value="{{ restaurant.pay_name|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0 text-header">UPI ID</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <input type="text" name="upi_id" id="upi_id" value="{{ restaurant.upi_id|default_if_none:'' }}" class="disable-input form-control" disabled>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-12 d-flex justify-content-end">
+                                        <button type="button" class="btn btn-custom btn-edit me-2" id="editBtn" onclick="enableEdit()">Update Details</button>
+                                        <button type="submit" class="btn btn-custom btn-save" id="saveBtn" style="display: none;">Save Changes</button>
+                                    </div>
+                                </div>                                
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+        <script>
+            function enableEdit() {
+                let inputs = document.querySelectorAll(".disable-input");
+                inputs.forEach(input => {
+                    input.removeAttribute("disabled");  
+                    input.classList.remove("disable-input");
+                    input.classList.add("enable-input");
+                });
+        
+                document.getElementById("editBtn").style.display = "none";
+                document.getElementById("saveBtn").style.display = "inline-block";
+            }
+        
+            function disableInputs() {
+                let inputs = document.querySelectorAll(".enable-input");
+                inputs.forEach(input => {
+                    input.setAttribute("disabled", "true");  
+                    input.classList.remove("enable-input");
+                    input.classList.add("disable-input"); 
+                });
+        
+                document.getElementById("editBtn").style.display = "inline-block";
+                document.getElementById("saveBtn").style.display = "none";
+            }
+        
+            document.addEventListener("DOMContentLoaded", function () {
+                document.getElementById("saveBtn").style.display = "none";
+            });
+        </script>
+        
+    
+
+
+{% if messages %}
+{% for message in messages %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var alertElement = document.getElementById('{% if "success" in message.tags %}floating-alert-success{% else %}floating-alert-error{% endif %}');
+        var alertMessage = document.getElementById('{% if "success" in message.tags %}floating-alert-success-message{% else %}floating-alert-error-message{% endif %}');
+        alertMessage.textContent = "{{ message|safe }}";
+        alertElement.classList.add('show');
+
+        setTimeout(function () {
+            alertElement.classList.remove('show');
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 500);
+        }, 3000);
+    });
+</script>
+{% endfor %}
+{% endif %}
+
+</body>
+</html>
+{% endblock content %}

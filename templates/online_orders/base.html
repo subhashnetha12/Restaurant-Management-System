@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}FoodHub{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* Put your whole <style> here or better create a static CSS file */
+    body {
+      margin: 0;
+      background: linear-gradient(to right, #f8f9fa, #ffffff);
+      font-family: 'Segoe UI', sans-serif;
+    }
+    /* ... rest of your styles ... */
+    .neon-header {
+      background: #111;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    }
+    .neon-header .highlight {
+      color: #ff5a39; 
+    }
+    .neon-cart {
+      font-size: 1.3rem;
+      color: #ff5a39;
+      background: none;
+      border: 2px solid #ff5a39;
+      border-radius: 50%;
+      padding: 10px;
+      transition: all 0.3s ease;
+    }
+    .neon-cart:hover {
+      background: #ff5a3953; 
+      box-shadow: 0 0 12px #ff5a39;
+      transform: scale(1.1);
+    }
+    /* add your other styles here */
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <header class="neon-header d-flex justify-content-between align-items-center px-4 py-3">
+    <h4 class="m-0">FOOD<span class="highlight">HUB</span></h4>
+    <button class="neon-cart" data-bs-target="#selectedItemsModal" onclick="toggleOrderModal()">🛒</button>
+  </header>
+
+  <main>
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- Modals -->
+  {% block modals %}
+  {% endblock %}
+
+  <!-- Bootstrap JS + Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

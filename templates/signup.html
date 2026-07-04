@@ -1,0 +1,188 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+  <link rel="stylesheet" href="{% static 'messages.css' %}">
+
+  <style>
+    body {
+      font-family: 'Quicksand', sans-serif;
+      margin: 0;
+      height: 100vh;
+      background: url('https://images.pexels.com/photos/541216/pexels-photo-541216.jpeg?cs=srgb&dl=pexels-flodahm-541216.jpg&fm=jpg') no-repeat center center/cover;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.523);
+      z-index: -1;
+    }
+
+
+
+    .card {
+      border: none;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      background-color: #ffffff9d;
+      padding: 2rem;
+      width: 100%;
+      max-width: 420px;
+      z-index: 1;
+    }
+
+    .btn-primary {
+      background-color: #ff8c00;
+      border-color: #ff8c00;
+      font-weight: bold;
+    }
+
+    .btn-primary:hover {
+      background-color: #e57c00;
+      border-color: #e57c00;
+    }
+
+    .text-link {
+      color: #ff8c00;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .text-link:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      .card {
+        padding: 1.5rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      .card {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="overlay"></div> 
+  
+  
+
+  <div class="container d-flex justify-content-center align-items-center vh-100">
+
+    <div id="floating-alert-error" class="floating-alert-error">
+      <span id="floating-alert-error-message"></span>
+    </div>
+    
+    <div class="card">
+      <div class="text-center mb-4">
+        <img
+          src="https://png.pngtree.com/thumb_back/fw800/background/20231226/pngtree-cheerful-chef-cartoon-restaurant-s-delighted-culinary-expert-in-crisp-white-image_13902866.png"
+          alt="Restaurant Logo" class="img-fluid rounded" style="max-width: 80%;">
+      </div>
+      <h2 class="text-center mb-3"><b>Sign up</b></h2>
+      <p class="text-center mb-4"><b>or</b> <a href="{% url 'signin' %}" class="text-link"><b>login to your account</b></a></p>      
+
+      <form method="post">
+        {% csrf_token %}                
+        <div class="mb-4">
+          <div class="input-group">
+            <span class="input-group-text bg-light fw-bold"><i class="fa-solid fa-user"></i></span>
+            <input type="text" class="form-control" placeholder="Enter your  username" name="username" {% if username %} value="{{username}}" {% endif %} aria-label="Name" required>
+          </div>
+        </div>
+        <div class="mb-4">
+          <div class="input-group">
+            <span class="input-group-text bg-light fw-bold"><i class="fa-solid fa-mobile-screen-button"></i></span>
+            <input type="number" class="form-control" placeholder="Enter your number" name="phone_number" {% if phone_number %} value="{{phone_number}}" {% endif %} aria-label="Phone Number" required>
+          </div>
+        </div>
+        <div class="mb-4">
+          <div class="input-group">
+            <span class="input-group-text bg-light"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" class="form-control" id="passwordInput" placeholder="Enter your password" name="password" aria-label="Password" required>
+            <button class="btn btn-light fw-bold" type="button" id="togglePassword">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary">CONTINUE</button>
+        </div>
+
+        <div class="form-check mt-4">
+          <input class="form-check-input" type="checkbox" value="" id="termsCheckbox" required>
+          <label class="form-check-label" for="termsCheckbox">
+            <b>By creating an account, I accept the</b> <a href="#" class="text-link"><b>Terms & Conditions</b></a> & <a
+              href="#" class="text-link"><b>Privacy Policy</b></a>.
+          </label>
+        </div>
+      </form>  
+    </div>
+  </div>
+  
+  <script>
+    document.getElementById("togglePassword").addEventListener("click", function () {
+      const passwordInput = document.getElementById("passwordInput");
+      const icon = this.querySelector("i");
+
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        icon.classList.replace("fa-eye", "fa-eye-slash");
+      } else {
+        passwordInput.type = "password";
+        icon.classList.replace("fa-eye-slash", "fa-eye");
+      }
+    });
+  </script>
+
+  {% if messages %}
+  {% for message in messages %}
+  {% if 'error' in message.tags %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var errorAlertElement = document.getElementById('floating-alert-error');
+      var errorMessage = document.getElementById('floating-alert-error-message');
+      errorMessage.textContent = "{{ message|safe }}";
+      errorAlertElement.style.display = 'block';
+      errorAlertElement.classList.add('show');
+
+      setTimeout(function () {
+        errorAlertElement.classList.remove('show');
+        errorAlertElement.style.display = 'none';
+      }, 3000); // 2 seconds delay for success alert
+    });                                        
+  </script>
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+
+
+</body>
+
+</html>

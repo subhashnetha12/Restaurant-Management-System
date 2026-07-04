@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome to Taste Haven</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    .bg-wrapper {
+      background: url('https://images.pexels.com/photos/3434523/pexels-photo-3434523.jpeg?cs=srgb&dl=pexels-bemistermister-3434523.jpg&fm=jpg') no-repeat center center fixed;
+      background-size: cover;
+      position: relative;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bg-wrapper::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 244, 230, 0.337); /* soft overlay */
+      z-index: 0;
+    }
+
+    .welcome-container {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+      padding: 30px 20px 20px;
+      text-align: center;
+      width: 95%;
+      max-width: 480px;
+      animation: fadeInUp 1s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 1;
+      position: relative;
+    }
+
+    .restaurant-img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      animation: zoomIn 1s;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #d2691e;
+      margin-bottom: 8px;
+      animation: fadeInDown 1s;
+    }
+
+    p {
+      font-size: 1.05rem;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .highlight {
+      color: #ff5722;
+      font-weight: bold;
+    }
+
+    .order-btn {
+      background: #ff7043;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-top: 20px;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .order-btn:hover {
+      background: #e85d36;
+      transform: scale(1.05);
+    }
+
+    .footer-text {
+      margin-top: 30px;
+      font-size: 0.95rem;
+      color: #777;
+    }
+
+    .social-icons {
+      margin-top: 10px;
+    }
+
+    .social-icons i {
+      font-size: 1.3rem;
+      margin: 0 10px;
+      color: #d2691e;
+      transition: transform 0.2s ease-in-out;
+    }
+
+    .social-icons i:hover {
+      transform: scale(1.2);
+      color: #ff7043;
+    }
+
+    @media (max-width: 480px) {
+      .welcome-container {
+        padding: 25px 15px;
+      }
+
+      h1 {
+        font-size: 1.7rem;
+      }
+
+      .restaurant-img {
+        max-height: 180px;
+      }
+
+      p {
+        font-size: 1rem;
+      }
+
+      .order-btn {
+        font-size: 1rem;
+        padding: 10px 20px;
+      }
+
+      .social-icons i {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-wrapper">
+  <div class="welcome-container animate__animated animate__fadeInUp">
+    <img src="https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&w=1000&q=80"
+         alt="Welcome Dish" class="restaurant-img animate__animated animate__zoomIn">
+
+    <h1 class="animate__animated animate__fadeInDown">Welcome to <br> <span class="highlight">{{restaurant_name}}</span>!</h1>
+    <p>
+      We’re absolutely delighted to have you here at — where every dish is crafted with passion, freshness, and a pinch of love.
+      <br> <span class="highlight">We promise to serve you an experience as delightful as your meal.</span> 💖
+    </p>
+    <p><strong>Estimated time:</strong> 20-30 minutes</p>
+
+    <label for="customerName" class="form-label mt-3"><strong>Please enter your name below to place order</strong></label>
+    <input type="text" id="customerName" placeholder="Please enter your name here.." class="form-control mt-1" oninput="checkName()">
+
+    <!-- Hidden Button -->
+    <a id="orderBtn" href="#" class="order-btn mt-3" style="display: none; text-decoration: none;">Go to Menu Section</a>
+
+    <script>
+      function checkName() {
+        const nameInput = document.getElementById("customerName");
+        const orderBtn = document.getElementById("orderBtn");
+        const name = nameInput.value.trim();
+
+        if (name.length > 0) {
+          const tableNo = "{{ table_no }}";
+          orderBtn.href = `{% url 'self_order' %}?table_no=${tableNo}&username=${encodeURIComponent(name)}`;
+          orderBtn.style.display = "inline-block";
+        } else {
+          orderBtn.style.display = "none";
+        }
+      }
+    </script>
+
+    <!-- Social Media -->
+    <div class="footer-text">
+      Follow us for updates:
+      <div class="social-icons">
+        <a href="#"><i class="fab fa-instagram"></i></a>
+        <a href="#"><i class="fab fa-facebook-square"></i></a>
+        <a href="#"><i class="fab fa-twitter"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

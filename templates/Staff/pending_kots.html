@@ -1,0 +1,190 @@
+{% extends "Staff/base.html" %}
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Dashboard</title>
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+       @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .kot-card {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            position: relative;
+            padding: 20px;
+            background: #fff;
+            border: none;
+        }
+
+        .kot-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .kot-title {
+            font-weight: 600;
+            color: #ff5e00;
+            font-size: 16px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .order-info {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .order-detail {
+            margin: 0;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .status-badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            background: #ff4507;
+            color: #fff;
+        }
+
+        .kot-items {
+            list-style: none;
+            padding: 0;
+        }
+
+        .kot-items li {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kot-items li strong {
+            color: #ff5e00;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            border: none;
+            padding: 5px 10px;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: background 0.3s ease-in-out;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container-fluid text-center">
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        
+        <h5 class="dashboard-header">🍽️ Pending KOT Overview</h5> <br>
+    
+        <div class="container mt-4">
+            {% if pending_kots %}
+                <div class="row justify-content-center">
+                    {% for kot in pending_kots %}
+                        <div class="col-md-5 mb-4">
+                            <div class="card kot-card">
+                                <div class="card-body text-center">
+                                    <p class="kot-title">KOT No: {{ kot.kot_no }}</p>
+        
+                                    <!-- Order Details in a Single Line -->
+                                    <div class="order-info d-flex justify-content-between align-items-center">
+                                        <p class="order-detail">
+                                            <strong>Order Type:</strong> {{ kot.order_type }} 
+                                            {% if kot.order_type == 'Dine-In' %} 
+                                                On {{ kot.table_no }} 
+                                            {% endif %}
+                                        </p>
+                                        <span class="status-badge pending">Pending</span>
+                                    </div>
+        
+                                    <hr>
+                                    <h6>Items:</h6>
+                                    <ul class="kot-items">
+                                        {% for item in kot_items %}
+                                            {% if item.kot_no == kot.kot_no %}
+                                                <li>
+                                                    <strong>{{ item.order_item }}</strong> <strong>({{ item.size }}) - x{{ item.quantity }}</strong>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+        
+                                    <!-- Form to mark KOT as Ready -->
+                                    <form method="POST" action="{% url 'pending_kots' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="kot_id" value="{{ kot.id }}">
+                                        <button type="submit" class="btn btn-success mt-3">Mark as Ready</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+        
+                        {% if forloop.counter|divisibleby:2 %}
+                            </div><div class="row justify-content-center">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center text-muted">No pending KOTs found.</p>
+            {% endif %}
+        </div>
+        
+    </div>
+     
+    
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
+{% endblock content %}

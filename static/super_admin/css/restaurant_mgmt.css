@@ -1,0 +1,322 @@
+:root {
+    --theme-color: 242, 169, 62;
+    --theme-color2: 240, 112, 84;
+    --light-theme-color: 255, 240, 227;
+    --white: 255, 255, 255;
+    --black: 0, 0, 0;
+    --dark-text: 61, 61, 61;
+    --content-color: 116, 116, 116;
+    --box-bg: 249, 249, 249;
+    --auth-bg: 240, 242, 241;
+    --success-color: 39, 125, 42;
+    --error-color: 245, 58, 58;
+    --accent-color: 58, 109, 229;
+    --rate-color: 255, 185, 49;
+    --secondary-color: 250, 177, 69;
+    --dashed-line: 232, 232, 232;
+}
+body {
+    position: relative;
+    font-family: "Poppins", sans-serif;
+    background-blend-mode: screen;
+    /* background: var(--box-bg) !important; */
+    background: beige;
+    overflow-x: hidden;
+}
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: .25rem;
+}
+.card {
+    margin-bottom: 30px;
+    border: none;
+    letter-spacing: 0.5px;
+    border-radius: 10px;
+    padding: 18px;
+    background: #fff;
+}
+
+.card .card-header {
+    background-color: #fff;
+    padding: 0;
+    border-bottom: 1px dashed #ecf3fa;
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.card-header:first-child {
+    border-radius: calc(.25rem - 1px) calc(.25rem - 1px) 0 0;
+}
+
+.card .card-header h5 {
+    font-size: calc(18px +(20 - 18)*((100vw - 320px) /(1920 - 320)));
+    font-weight: 600;
+    padding-bottom: 8px;
+    color: #3d3d3d;
+}
+
+.card .card-body {
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.card-body {
+    -webkit-box-flex: 1;
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    padding: 1rem 1rem;
+}
+
+.row>div {
+    position: relative;
+}
+
+.sticky {
+    position: sticky;
+    top: 100px;
+    left: 0;
+}
+
+.setting-main-box {
+    background-color: rgba(245, 245, 245, 0.6);
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.setting-main-box li {
+    width: 100%;
+    margin: 0 0 8px;
+    border-radius: 4px;
+}
+
+.setting-main-box li .nav-link.active {
+    background: -webkit-gradient(linear, left top, right top, from(#f2a93e), to(#f07054));
+    background: linear-gradient(to right, #f2a93e, #f07054);
+    color: #fff !important;
+    border-color: transparent;
+}
+
+.setting-main-box li .nav-link {
+    width: 100%;
+    border: none;
+    background-color: transparent;
+    text-align: left;
+    font-weight: 500;
+    font-size: clamp(14px, 1vw, 16px) !important;
+    color: #747474;
+    border-radius: 4px;
+    padding: 10px 16px;
+}
+
+.setting-main-box li .nav-link i {
+    vertical-align: 0px;
+    margin-right: 6px;
+}
+
+.input-items {
+    background-color: rgba(245, 245, 245, 0.6);
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.input-items .input-box-form h6 {
+    font-size: clamp(14px, 1vw, 16px);
+    font-weight: 500;
+    text-transform: capitalize;
+    margin-bottom: 10px;
+    color: #3d3d3d;
+}
+
+input {
+    padding: 10px 16px;
+    border: 1px dashed #dedbdb;
+    width: 100%;
+    border-radius: 4px;
+    background-color: rgba(245, 245, 245, 0.6);
+}
+
+.input-items .input-box-form input {
+    background-color: #fff;
+    border: 1px solid #ddd; 
+    border-radius: 5px; 
+    padding: 10px; /* Inner padding */
+    outline: none; /* Remove default outline */
+    box-shadow: none; /* Remove shadow on focus */
+    transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.input-items .input-box-form .choose-img-box {
+    padding: 10px 16px;
+    border: 1px solid #ddd; 
+    border-radius: 5px; 
+    background-color: #fff;
+    width: 100% !important;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.input-items .input-box-form .choose-img-box i {
+    margin-right: 6px;
+}
+
+.input-items .input-box-form textarea {
+    background-color: #fff;
+}
+textarea {
+    padding: 10px 16px;
+    border: 1px solid #ddd; 
+    border-radius: 5px; 
+    width: 100%;
+}
+
+
+.service-box .service-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+
+.custom-checkbox {
+    appearance: none;
+    cursor: pointer;
+    height: 16px;
+    width: 16px;
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+    border: 1px solid #ddd;
+    background-color: transparent;
+    transition: all .3s ease-in-out;
+}
+
+[type=checkbox], [type=radio] {
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: 0;
+}
+
+.custom-checkbox:checked {
+    background-color: #F2A93E;
+    border: 1px solid #F2A93E;
+}
+
+.custom-checkbox::before {
+    content: "\eb7b";
+    font-family: remixicon !important;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    color: #F2A93E;
+    -webkit-transform: translate(-50%, -50%) scale(0);
+    transform: translate(-50%, -50%) scale(0);
+    -webkit-transition: all .3s ease-in-out;
+    transition: all .3s ease-in-out;
+}
+
+.custom-checkbox:checked::before {
+    -webkit-transform: translate(-50%, -50%) scale(1);
+    transform: translate(-50%, -50%) scale(1);
+    color: #fff;
+}
+
+.service-box .service-item img {
+    width: 20px;
+}
+
+.restaurant-button {
+    background: -webkit-gradient(linear, left top, right top, from(#f2a93e), to(#f07054));
+    background: linear-gradient(to right, #f2a93e, #f07054);
+    color: #fff;
+    width: fit-content;
+    float: right;
+    padding: 5px 15px
+}
+
+
+@media (max-width: 1199px) {
+    .setting-main-box {
+        display: flex;
+        flex-wrap: unset;
+        position: relative;
+        top: 0;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding-bottom: 9px;
+        overflow: auto;
+        border-right: none;
+        padding-right: 0;
+    }
+    .setting-main-box li {
+        display: inline-block;
+        margin: 0;
+        width: max-content;
+    }
+    .setting-main-box li .nav-link {
+        width: max-content;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

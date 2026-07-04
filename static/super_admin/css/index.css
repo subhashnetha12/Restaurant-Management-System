@@ -1,0 +1,416 @@
+
+.btn-add {
+    background-color: #F07054;
+    font-weight: bold;
+    color: #353535;
+    position: absolute;
+    margin-top: 35px; 
+    right: 0; 
+    z-index: 10; 
+}
+.btn-add:hover{
+    background-color: #ff451b;
+    color: #ffffff;
+}
+.btn-close-white {
+    filter: invert(100%);
+}
+
+.table-container {
+    background-color: #f1f1f1;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.table-responsive {
+    overflow-x: auto;
+    overflow-y: hidden; 
+    -webkit-overflow-scrolling: touch; 
+}
+.table-wrapper {
+    max-height: 500px; 
+    overflow-y: auto; 
+    overflow-x: hidden; 
+    -webkit-overflow-scrolling: touch; 
+}
+.table {
+    overflow-x: auto;
+    width: auto;    
+    border-collapse: collapse; 
+}
+.table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #f2a93e;
+    color: #353535;
+    border-bottom: 2px solid #dee2e6;
+}
+
+
+
+.table th, .table td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 2px 5px;
+    line-height: 20px; 
+}
+.table tbody tr:hover td {    
+    background-color: #ede2dd;
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+
+/* Fade-in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+
+/* .dropdown-toggle::after {
+    display: none;
+}
+
+
+.dropdown-toggle {
+    color: #454545;
+    border: none;
+    background-color: transparent;
+}
+
+
+.dropdown-toggle:hover {
+    background-color: rgb(255, 176, 145);
+}
+
+
+.dropdown-toggle:active,
+.dropdown-toggle.show {  
+    background-color: #f2a93e; 
+    color: #353535;
+}
+
+
+.dropdown-menu {
+    min-width: 100px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+} */
+
+.btn-edit {
+    color: #5a5a5a;
+}
+
+.btn-edit:hover {
+    color: #0ddd14;
+}
+
+/* .btn-edit:active {
+    background-color: #eeffed !important; 
+    color: #2a7a1e !important; 
+} */
+
+
+.btn-delete {
+    color: #5a5a5a;
+}
+
+.btn-delete:hover {
+    color: #ff473a;
+}
+
+/* .btn-delete:active {
+    background-color: #ffeaea !important; 
+    color: #c62828 !important; 
+} */
+
+
+#RestaurantModal{
+    z-index: 10000;
+}
+/* Custom container styles */
+.container-custom {
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    margin: 100px auto auto auto;
+}
+/* Modal styles */
+.modal-header {
+    padding: 0.5rem 1rem;
+    background-color: #F07054;
+    color: #ffff;
+}
+
+.modal-body {
+    padding-top: 25px;
+    border: 1px solid #dbdbdb;
+    border-radius: 0 0 5px 5px;
+}
+
+.modal-title {
+    font-weight: bold;
+}
+#modal_container{
+    margin-left: -180px;
+}
+
+/* Floating label form group */
+.form-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    position: absolute;
+    top: 50%;
+    left: 25px;
+    transform: translateY(-50%);
+    background: #fff;
+    padding: 0 5px;
+    color: #aaa;
+    transition: 0.2s ease all;
+    pointer-events: none;
+}
+
+.form-control {
+    border: none;
+    border-radius: 0px;
+    border-bottom: 2px solid #aaa;
+    padding: 10px;
+    box-shadow: none;
+    outline: none;
+}
+
+.form-control:focus {
+    border-bottom: 2px solid #F07054;
+    background-color: #fffbf5;
+    box-shadow: none;
+    /* box-shadow: 0px 5px 5px 5px rgba(156, 156, 156, 0.1); */
+}
+
+.form-control:focus ~ .form-label,
+.form-control:not(:placeholder-shown) ~ .form-label {
+    top: 0;
+    transform: translateY(-60%);
+    left: 2%;
+    font-size: 14px;
+    color: #F07054;
+    font-weight: bold;
+}
+.text-label{
+    position: absolute;
+    top: 50%;
+    left: 30px;
+    transform: translateY(-50%);
+    background: #fff;
+    padding: 0 5px;
+    color: #aaa;
+    transition: 0.3s ease all;
+    pointer-events: none;
+}
+.form-control:focus ~ .text-label,
+.form-control:not(:placeholder-shown) ~ .text-label {
+    top: 0;
+    transform: translateY(-60%);
+    left: 2%;
+    font-size: 14px;
+    color:#F07054;
+    font-weight: bold;
+}
+
+.resto-label{
+    position: absolute;
+    top: 50%;
+    left: 30px;
+    transform: translateY(-50%);
+    background: #fff;
+    padding: 0 5px;
+    color: #aaa;
+    transition: 0.3s ease all;
+    pointer-events: none;
+}
+.form-control:focus ~ .resto-label,
+.form-control:not(:placeholder-shown) ~ .resto-label {
+    top: 0;
+    transform: translateY(-60%);
+    left: 4%;
+    font-size: 14px;
+    color:#F07054;
+    font-weight: bold;
+}
+
+.form-control::placeholder {
+    opacity: 0;
+}
+
+/* Button group styling */
+.form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-success {
+    color: #02c902;
+    background-color: #fdfdfd;
+    border: 1px solid #02c902;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.btn-success:hover {
+    color: white;
+    background-color: #02c902;
+}
+
+.btn-danger {
+    color: red;
+    background-color: #fdfdfd;
+    border: 1px solid red;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.btn-danger:hover {
+    color: white;
+    background-color: red;
+}
+/* DataTables customization */
+.dataTables_length,
+.dataTables_filter {
+    font-size: 14px !important;
+    color: #333 !important;
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 10px;
+}
+
+.dataTables_length select ,
+.dataTables_filter input{
+    padding: 5px !important;
+    border-radius: 5px !important;
+    border: 1px solid #ccc !important;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.dataTables_length select:focus,
+.dataTables_filter input:focus {
+    outline: none !important;
+    border-color: #007bff !important;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5) !important;
+}
+
+.dataTables_paginate .paginate_button {
+    padding: 3px 6px !important;
+    margin: 5px 5px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 10px !important;
+    background-color: #f5f5f5 !important;
+    color: #333 !important;
+    transition: background-color 0.3s ease, color 0.3s ease !important;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    background-color: #6d4c41 !important;
+    color: white !important;
+}
+
+.dataTables_paginate .paginate_button.current {
+    background-color: #6d4c41 !important;
+    color: white !important;
+}
+
+.dataTables_paginate .paginate_button.disabled {
+    color: #999 !important;
+    background-color: #f5f5f5 !important;
+    border-color: #ddd !important;
+}
+
+::-webkit-scrollbar {
+    display: none;
+    background: transparent; 
+}
+
+
+/* Media query for tablet and mobile screens */
+@media (max-width: 1028px) {
+    .table-responsive {
+        overflow-x: auto; /* Enables horizontal scrolling */
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
+    }
+
+    .table-wrapper {
+        max-height: 300px; /* Adjust height for smaller screens */
+        overflow-y: auto;
+    }
+
+    .table {
+        display: block;
+        white-space: nowrap; /* Prevent table content from wrapping */
+        width: 100%; /* Ensure the table occupies full width */
+    }
+
+    .table th, .table td {
+        text-align: left; /* Adjust text alignment for better readability on small screens */
+        min-width: 150px; /* Ensure columns have enough width for readability */
+    }
+    .container-custom {
+        width:auto;
+        padding: 8px;
+        
+    }
+    #modal_container{
+        margin-left: 10px;
+    }
+}
+
+/* Media query for mobile screens */
+@media (max-width: 778px) {
+    .table th, .table td {
+        padding: 10px; /* Increase padding for touch-friendly spacing */
+    }
+    .form-control {
+        padding: 8px;
+    }
+
+    .modal-dialog {
+        max-width: 90%;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .btn-modal {
+        padding: 4px 8px;
+    }
+    .table th:nth-child(1), .table td:nth-child(1),
+    .table th:nth-child(8), .table td:nth-child(8) {
+        width: 10px; /* Adjust this value as needed */
+        max-width: 10px; /* Ensure it doesn't grow beyond this */
+        text-align: center;
+    }
+    .container-custom {
+        width:auto;
+        padding: 8px;
+        
+    }
+
+    #modal_container{
+        margin-left: 10px;
+    }
+}
+

@@ -1,0 +1,678 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mobile Menu App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(to right, #f8f9fa, #ffffff);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .container{
+      padding: 10px;
+    }
+  
+    .menu-card,
+    .category-card {
+      background: linear-gradient(135deg, #ffffff, #f2f2f2);
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s ease-in-out;
+      cursor: pointer;
+      padding: 10px;
+      opacity: 0;
+      animation: fadeInUp 0.6s ease forwards;
+    }
+  
+    .menu-card:hover,
+    .category-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    }
+  
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+  
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+    }
+  
+    .category-img,
+    .menuitem-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: fill; 
+      padding: 1px; 
+      background: white;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s ease;
+    }
+  
+    .category-img:hover,
+    .menuitem-img:hover {
+      transform: scale(1.07);
+    }
+  
+    .btn-light {
+      font-size: 12px;
+      background-color: #ff5a39;
+      color: #ffffff;
+      font-weight: bold;
+      border: 1px solid #ccc;
+      transition: all 0.3s ease;
+    }
+  
+    .btn-light:hover {
+      background-color: #ffebe6;
+      color: #ff5a39;
+      border-color: #ff5a39;
+    }
+  
+    .modal-header {
+      padding: 0.75rem 1rem;
+      background: #F07054;
+      color: #fff;
+      border-radius: 8px 8px 0 0;
+    }
+  
+    .modal-body {
+      padding-top: 20px;
+      border: 1px solid #eee;
+      border-radius: 0 0 8px 8px;
+    }
+  
+    .order-item:hover {
+      background-color: #fdfdfd;
+      transition: 0.3s;
+    }
+  
+    .order-item .btn-outline-danger {
+      border-radius: 5px;
+      font-size: 14px;
+      line-height: 1;
+    }
+  
+    #categories-section,
+    #menu-section {
+      min-height: 80vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+  
+    .category-title {
+      font-size: 0.9rem;
+      color: #333;
+      margin-top: 5px;
+    }
+  
+    .card-body strong {
+      color: #444;
+      font-size: 0.95rem;
+    }
+  
+    .hover-shadow:hover {
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+      transform: scale(1.02);
+      transition: all 0.3s ease-in-out;
+    }
+
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+    .input-group-text {
+      background-color: #fff;
+      border-radius: 0.375rem 0 0 0.375rem;
+    }
+
+    input.form-control:focus,
+    select.form-select:focus {
+      box-shadow: 0 0 0 0.15rem rgba(255, 90, 57, 0.25);
+      border-color: #ff5a39;
+    }
+    
+
+    .neon-header {
+      background: #111;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    }
+
+    .neon-header .highlight {
+      color: #ff5a39; 
+    }
+
+    .neon-cart {
+      font-size: 1.3rem;
+      color: #ff5a39;
+      background: none;
+      border: 2px solid #ff5a39;
+      border-radius: 50%;
+      padding: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .neon-cart:hover {
+      background: #ff5a3953; 
+      box-shadow: 0 0 12px #ff5a39;
+      transform: scale(1.1);
+    }
+
+    .toast-notification {
+      position: absolute;
+      background-color: #ff7300;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-weight: bold;
+      z-index: 9999;
+      transition: opacity 0.4s ease;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    .flying-icon {
+      position: absolute;
+      font-size: 24px;
+      color: green;
+      z-index: 9999;
+      transition: transform 1.2s ease-in-out, opacity 1.2s ease-in-out;
+      pointer-events: none;
+    }
+
+  </style>
+
+<body>
+
+  <header class="neon-header d-flex justify-content-between align-items-center px-4 py-3">
+    <h4 class="m-0">FOOD<span class="highlight">HUB</span></h4>
+    <button class="neon-cart" data-bs-target="#selectedItemsModal"  onclick="toggleOrderModal()">🛒</button>
+  </header>
+  
+  <!-- Categories Section -->
+  <section id="categories-section" class="container">
+    <h4 class="text-center mb-4 fw-semibold">
+      Select a Category
+    </h4>
+  
+    <div class="row justify-content-center mb-4">
+      <div class="col-md-4 px-3">
+        <div class="input-group shadow-sm">
+          <span class="input-group-text bg-white border-end-0">
+            <i class="fas fa-search text-muted"></i>
+          </span>
+          <input type="text" id="categorySearch" class="form-control border-start-0" placeholder="Search categories...">
+        </div>
+      </div>
+    </div>
+  
+    <div class="row" id="category-list">
+      {% for category in cat_det %}
+      <div class="col-6 col-md-3 mb-4 category-item">
+        <div class="category-card text-center p-2 border shadow-sm bg-white hover-shadow"
+          onclick="showMenu('{{ category.id }}', '{{ category.name }}')">
+          <div class="category-image-wrapper mx-auto mb-2">
+            <img src="{{ category.image.url }}" class="category-img" alt="{{ category.name }}">
+          </div>
+          <div class="category-title fw-semibold">{{ category.name }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  
+  <!-- Menu Section -->
+  <section id="menu-section" class="container" style="display: none;">
+    <div class="menu-header d-flex justify-content-between align-items-center mb-3">
+      <span id="menu-title" class="fw-bold fs-5">Explore Menu items</span>
+      <button class="btn btn-light btn-sm" onclick="goBack()">← Back to categories</button>
+    </div>
+  
+    <!-- Search and Filter -->
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-4 px-2">
+      <div class="input-group shadow-sm" style="min-width: 150px; max-width: 400px;">
+        <span class="input-group-text bg-white border-end-0">
+          <i class="fas fa-search text-muted"></i>
+        </span>
+        <input type="text" id="menuSearch" class="form-control border-start-0" placeholder="Search menu items...">
+      </div>
+      <select id="vegFilter" class="form-select shadow-sm" style="min-width: 120px; max-width: 400px;">
+        <option value="all">All</option>
+        <option value="veg">Veg</option>
+        <option value="non-veg">Non-Veg</option>
+      </select>
+    </div>
+  
+    {% for category in cat_det %}
+    <div id="category-{{ category.id }}" class="category-menu mt-4" style="display: none;">
+      <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
+        {% for item in all_menuitems %}
+        {% if item.category == category.name %}
+        <div class="col menu-item" data-name="{{ item.name }}" data-type="{{ item.type|lower }}">
+          <div class="menu-card text-center p-2 border  shadow-sm bg-white hover-shadow"
+            data-item-id="{{ item.id }}"
+            data-item-name="{{ item.name }}"
+            onclick="openMenuItemModal(this)">
+            <div class="menu-image-wrapper mx-auto mb-2">
+              <img src="{{ item.image.url }}" class="menuitem-img" alt="{{ item.name }}">
+            </div>
+            <div class="card-body p-0">
+              <strong>{{ item.name }}</strong><br>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+  
+
+<!-- Menu Item Modal -->
+<div class="modal fade" id="menuItemModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="menuItemLabel">Item</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <strong><p id="modal-item-price" class="mb-2"></p></strong>
+        <label for="modal-size" class="form-label"><strong>Size:</strong></label>
+        <select id="modal-size" class="form-select mb-3" onchange="updatePrice()"></select>
+        <label for="modal-qty" class="form-label"><strong>Quantity:</strong></label>
+        <input type="number" id="modal-qty" class="form-control mb-3" value="1" min="1" />
+        <button class="btn btn-success w-100" onclick="handleAddClick(this, document.getElementById('menuItemLabel').textContent, 'modal-size', 'modal-qty')">
+          Add to Order
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Order Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Your Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="order-list"></div>
+      <div class="modal-footer">
+        <button class="btn btn-primary w-100" onclick="placeOrder()">Place Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pre-Invoice Modal -->
+<div class="modal fade" id="preInvoiceModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'qr_orders' %}?table_no={{ table_no }}&username={{ username }}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Pre-Invoice</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="pre-invoice-body"></div>
+
+        <!-- Hidden Fields to Submit -->
+        <input type="hidden" name="totalPrice" id="totalPriceInput">
+        <input type="hidden" name="no_of_rows" id="noOfRowsInput">
+
+        <div id="items-inputs"></div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button class="btn btn-success" type="submit">Confirm & Pay</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function handleAddClick(button, name, sizeId, qtyId) {
+    const size = document.getElementById(sizeId)?.value || '';
+    const qty = document.getElementById(qtyId)?.value || 1;
+
+    addToOrder(name, size, qty); // Your existing order logic
+
+    setTimeout(() => {
+      animateToSelectedButtonFromButton(button);
+      showItemAddedToast(name);
+    }, 50);
+  }
+
+  function showItemAddedToast(itemName) {
+    document.querySelectorAll(".toast-notification").forEach(el => el.remove());
+
+    const toast = document.createElement("div");
+    toast.className = "toast-notification";
+    toast.textContent = `${itemName} added to order`;
+
+    // Position at the top center of the screen
+    toast.style.top = "50px";
+    toast.style.left = "50%";
+    toast.style.transform = "translateX(-50%)";
+
+    document.body.appendChild(toast);
+
+    // Fade out and remove
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => toast.remove(), 400);
+    }, 2200);
+  }
+
+
+  function animateToSelectedButtonFromButton(buttonEl) {
+    const target = document.querySelector('[data-bs-target="#selectedItemsModal"]');
+    if (!buttonEl || !target) return;
+
+    const sourceRect = buttonEl.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+
+    const floatingIcon = document.createElement("div");
+    floatingIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
+    floatingIcon.classList.add('flying-icon');
+    floatingIcon.style.top = `${sourceRect.top + window.scrollY + sourceRect.height / 2}px`;
+    floatingIcon.style.left = `${sourceRect.left + window.scrollX + sourceRect.width / 2}px`;
+
+    document.body.appendChild(floatingIcon);
+
+    const deltaX = (targetRect.left + targetRect.width / 2) - (sourceRect.left + sourceRect.width / 2);
+    const deltaY = (targetRect.top + targetRect.height / 2) - (sourceRect.top + sourceRect.height / 2);
+
+    requestAnimationFrame(() => {
+      floatingIcon.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
+      floatingIcon.style.opacity = "0";
+    });
+
+    setTimeout(() => floatingIcon.remove(), 1200);
+  }
+</script>
+
+
+
+<script>
+  // Handle menu item search
+  document.getElementById('menuSearch').addEventListener('input', function () {
+    filterMenuItems();
+  });
+
+  // Handle Veg/Non-Veg filter
+  document.getElementById('vegFilter').addEventListener('change', function () {
+    filterMenuItems();
+  });
+
+  function filterMenuItems() {
+    const searchTerm = document.getElementById('menuSearch').value.toLowerCase();
+    const selectedType = document.getElementById('vegFilter').value;
+
+    const menuItems = document.querySelectorAll('.menu-item');
+
+    menuItems.forEach(item => {
+      const itemName = item.getAttribute('data-name').toLowerCase();
+      const itemType = item.getAttribute('data-type'); // already lowercase
+
+      const matchesSearch = itemName.includes(searchTerm);
+      const matchesType = selectedType === 'all' || itemType === selectedType;
+
+      if (matchesSearch && matchesType) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+</script>
+
+
+<!-- JSON Data Injection -->
+<script>
+  const menuDetails = JSON.parse('{{ menu_details_json }}') ;
+  const gstDetails = JSON.parse('{{ gst_details_json }}');
+</script>
+
+
+<script>
+  function placeOrder() {
+    if (orderList.length === 0) return;
+  
+    const preInvoiceBody = document.getElementById('pre-invoice-body');
+    const itemsInputs = document.getElementById('items-inputs');
+    const totalPriceInput = document.getElementById('totalPriceInput');
+    const noOfRowsInput = document.getElementById('noOfRowsInput');
+  
+    preInvoiceBody.innerHTML = '';
+    itemsInputs.innerHTML = '';
+  
+    let totalBeforeTax = 0, totalTax = 0, totalFinal = 0;
+  
+    orderList.forEach((item, index) => {
+      const gstInfo = gstDetails[item.name] || {};
+      const gstRate = parseFloat(gstInfo.gst_rate) || 0;
+      const gstType = gstInfo.gst_type || 'Exclusive';
+      const qty = item.qty;
+      const basePrice = parseFloat(item.price) || 0;
+  
+      let itemTax = 0, priceBeforeTax = 0, itemTotal = 0;
+  
+      if (gstType === "Exclusive") {
+        itemTax = +(basePrice * gstRate).toFixed(2);
+        priceBeforeTax = basePrice;
+        itemTotal = (basePrice + itemTax) * qty;
+      } else {
+        priceBeforeTax = +(basePrice / (1 + gstRate)).toFixed(2);
+        itemTax = +(basePrice - priceBeforeTax).toFixed(2);
+        itemTotal = basePrice * qty;
+      }
+  
+      const totalItemTax = +(itemTax * qty).toFixed(2);
+      const totalItemBeforeTax = +(priceBeforeTax * qty).toFixed(2);
+  
+      totalBeforeTax += totalItemBeforeTax;
+      totalTax += totalItemTax;
+      totalFinal += itemTotal;
+  
+      // Display
+      preInvoiceBody.innerHTML += `
+        <div class="mb-2 border-bottom pb-2">
+          <div class="d-flex justify-content-between">
+            <div>
+              <strong>${item.name}</strong><br>
+              <small>${item.size} x Qty:${qty}</small><br>
+              <small class="text-muted">
+                Before Tax: Rs. ${totalItemBeforeTax.toFixed(2)}<br>
+                GST (${(gstRate * 100).toFixed(0)}% ${gstType}): Rs. ${totalItemTax.toFixed(2)}
+              </small>
+            </div>
+            <div class="text-end">
+              Rs. ${itemTotal.toFixed(2)}
+            </div>
+          </div>
+        </div>
+      `;
+  
+      // Hidden inputs
+      itemsInputs.innerHTML += `
+        <input type="hidden" name="item_name_${index + 1}" value="${item.name}">
+        <input type="hidden" name="item_size_${index + 1}" value="${item.size}">
+        <input type="hidden" name="qty_${index + 1}" value="${qty}">
+        <input type="hidden" name="price_${index + 1}" value="${basePrice}">
+      `;
+    });
+  
+    preInvoiceBody.innerHTML += `
+      <div class="mt-3 border-top pt-3">
+        <div class="d-flex justify-content-between">
+          <span>Taxable Amount (Before Tax):</span>
+          <strong>Rs. ${totalBeforeTax.toFixed(2)}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span>Total GST:</span>
+          <strong class="text-success">Rs. ${totalTax.toFixed(2)}</strong>
+        </div>
+        <div class="d-flex justify-content-between fs-5 fw-bold mt-2">
+          <span>Total:</span>
+          <span>Rs. ${totalFinal.toFixed(2)}</span>
+        </div>
+      </div>
+    `;
+  
+    totalPriceInput.value = totalFinal.toFixed(2);
+    noOfRowsInput.value = orderList.length;
+  
+    const cartModal = bootstrap.Modal.getInstance(document.getElementById('orderModal'));
+    cartModal.hide();
+    new bootstrap.Modal(document.getElementById('preInvoiceModal')).show();
+  }
+  </script>
+
+<!-- Scripts -->
+<script>
+  let selectedItem = null;
+  let orderList = [];
+
+  function showMenu(categoryId, categoryName) {
+    document.getElementById("categories-section").style.display = "none";
+    document.getElementById("menu-section").style.display = "block";
+    document.getElementById("menu-title").innerText = categoryName;
+
+    // Hide all categories first
+    document.querySelectorAll(".category-menu").forEach(el => el.style.display = "none");
+
+    // Show the selected category's menu
+    const selectedMenu = document.getElementById(`category-${categoryId}`);
+    if (selectedMenu) selectedMenu.style.display = "block";
+  }
+
+  function goBack() {
+    document.getElementById("menu-section").style.display = "none";
+    document.getElementById("categories-section").style.display = "block";
+  }
+
+ 
+  function openMenuItemModal(el) {
+    const itemName = el.getAttribute('data-item-name');
+    document.getElementById('menuItemLabel').textContent = itemName;
+
+    const itemDetails = menuDetails[itemName];
+    const sizeSelect = document.getElementById('modal-size');
+    sizeSelect.innerHTML = '';
+
+    itemDetails.forEach(detail => {
+      const option = document.createElement('option');
+      option.value = detail.table_price;
+      option.setAttribute('data-size', detail.size);
+      option.textContent = detail.size;
+      sizeSelect.appendChild(option);
+    });
+
+    updatePrice();
+    new bootstrap.Modal(document.getElementById('menuItemModal')).show();
+  }
+
+  function updatePrice() {
+    const sizeSelect = document.getElementById('modal-size');
+    const selectedPrice = sizeSelect.value;
+    document.getElementById('modal-item-price').textContent = `Price: Rs.${selectedPrice}`;
+  }
+
+  function addToOrder() {
+    const itemName = document.getElementById('menuItemLabel').textContent;
+    const size = document.getElementById('modal-size').selectedOptions[0].textContent;
+    const price = document.getElementById('modal-size').value;
+    const qty = parseInt(document.getElementById('modal-qty').value);
+
+    const item = {
+      name: itemName,
+      size: size,
+      price: parseFloat(price),
+      qty: qty
+    };
+
+    orderList.push(item);
+    updateOrderListUI();
+    bootstrap.Modal.getInstance(document.getElementById('menuItemModal')).hide();
+  }
+
+  function updateOrderListUI() {
+    const orderListContainer = document.getElementById('order-list');
+    orderListContainer.innerHTML = '';
+
+    if (orderList.length === 0) {
+      orderListContainer.innerHTML = '<p class="text-center text-muted">Your order is empty.</p>';
+      return;
+    }
+
+    let totalAmount = 0;
+
+    orderList.forEach((item, index) => {
+      const itemDiv = document.createElement('div');
+      itemDiv.classList.add(
+        'order-item', 'p-3', 'rounded', 'mb-3', 'bg-white', 'border',
+        'd-flex', 'justify-content-between', 'align-items-start', 'shadow-sm'
+      );
+
+      const itemTotal = item.price * item.qty;
+      totalAmount += itemTotal;
+
+      itemDiv.innerHTML = `
+        <div>
+          <div class="fw-bold fs-6 mb-1 text-dark">${item.name}</div>
+          <div class="text-muted small">${item.size} - Qty: ${item.qty}</div>
+        </div>
+        <div class="text-end">
+          <div class="d-flex align-items-center justify-content-end">
+            <span class="fw-semibold text-success me-2">Rs. ${itemTotal.toFixed(2)}</span>
+            <button class="btn btn-sm btn-outline-danger" onclick="removeOrderItem(${index})">
+              &times;
+            </button>
+          </div>
+        </div>
+      `;
+
+      orderListContainer.appendChild(itemDiv);
+    });
+
+  }
+
+
+  function removeOrderItem(index) {
+    orderList.splice(index, 1);
+    updateOrderListUI();
+  }
+
+  function toggleOrderModal() {
+    new bootstrap.Modal(document.getElementById('orderModal')).show();
+  }
+
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+ 
+</body>
+</html>
+

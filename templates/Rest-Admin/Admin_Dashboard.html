@@ -1,0 +1,208 @@
+{% extends "Rest-Admin/base.html" %}
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        body {
+            background-color: #e9e9ff;
+            font-family: 'Poppins', sans-serif;
+            color: white;
+        }
+        .card {
+            border-radius: 15px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease-in-out;
+            text-align: center;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .form-select {
+            background-color: #2a2a3b;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 1s forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+        .dashboard-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        .chart-container {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .chart-container:hover {
+            transform: translateY(-5px);
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container text-center mt-4">
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        
+        <h2 class="mb-4 dashboard-title">Restaurant Admin Dashboard</h2>
+        <!-- <div class="filter-container mb-4 fade-in">
+            <select class="form-select" id="roleFilter">
+                <option value="all">All Roles</option>
+                <option value="chef">Chef</option>
+                <option value="waiter">Waiter</option>
+                <option value="manager">Manager</option>
+            </select>
+            <select class="form-select" id="orderFilter">
+                <option value="all">All Orders</option>
+                <option value="day">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+            </select>
+            <select class="form-select" id="paymentFilter">
+                <option value="all">All Payments</option>
+                <option value="day">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+            </select>
+        </div> -->
+        
+        <div class="row fade-in">
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <div class="icon">👨‍🍳</div>
+                    <h5>Total Staff</h5>
+                    <p class="fs-3">{{ total_staff }}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <div class="icon">📦</div>
+                    <h5>Total Orders</h5>
+                    <p class="fs-3">{{ total_orders }}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <div class="icon">💰</div>
+                    <h5>Total Payments</h5>
+                    <p class="fs-3">Rs.{{ total_payments }}</p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="row fade-in mt-4">
+        <div class="col-md-6">
+            <div id="orderChart" class="chart-container"></div> <!-- Corrected from <canvas> to <div> -->
+        </div>
+        <div class="col-md-6">
+            <div id="paymentChart" class="chart-container"></div> <!-- Corrected from <canvas> to <div> -->
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // 📊 Orders Line Chart
+            var orderOptions = {
+                chart: {
+                    type: "line",
+                    height: 300
+                },
+                series: [{
+                    name: "Orders",
+                    data: [10, 20, 15, 25, 30, 40, 50] // Static Data
+                }],
+                xaxis: {
+                    categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"]
+                },
+                colors: ["#6e8efb"]
+            };
+            var orderChart = new ApexCharts(document.querySelector("#orderChart"), orderOptions);
+            orderChart.render();
+    
+            var paymentOptions = {
+                chart: {
+                    type: "pie",
+                    height: 300
+                },
+                series: [15, 35], 
+                labels: ["Pending", "Completed"],
+                colors: ["#FFA500", "#4CAF50"], 
+                legend: {
+                    position: "bottom"
+                }
+            };
+
+            var paymentChart = new ApexCharts(document.querySelector("#paymentChart"), paymentOptions);
+            paymentChart.render();
+        });
+    </script>    
+        
+    
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+</body>
+</html>
+{% endblock content %}

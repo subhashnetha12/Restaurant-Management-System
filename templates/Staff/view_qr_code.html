@@ -1,0 +1,75 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Code</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .qr-container {
+            padding: 25px;
+            background-color: #fff;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .qr-container img {
+            width: 300px;
+            height: auto;
+        }
+
+        .print-btn {
+            margin-top: 20px;
+            padding: 10px 24px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .print-btn:hover {
+            background-color: #555;
+        }
+
+        @media print {
+            .print-btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>QR Code for {{ table.table_no }}</h2>
+
+    <div class="qr-container">
+        {% if table.qr_code %}
+            <img src="{{ table.qr_code.url }}" alt="QR Code for {{ table.table_no }}" width="200">
+        {% else %}
+            <p>No QR code available.</p>
+        {% endif %}
+        <br>
+        <button class="print-btn" onclick="window.print()">Print QR</button>
+    </div>
+
+</body>
+</html>

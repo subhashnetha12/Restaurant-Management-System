@@ -1,0 +1,317 @@
+{% extends "Rest-Admin/base.html" %}
+
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Restaurant</title>
+    <link rel="stylesheet" href="{% static 'super_admin/css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        .dataTables_filter {
+            margin-right: 120px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container-fluid table-container display responsive wrap fade-in">
+
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+
+        <div class="d-flex align-items-center position-relative"> <!-- Added position-relative -->
+            <div id="dataTables_filter_container" class="me-2">
+            </div>
+            <button type="button" class="btn btn-add" data-bs-toggle="modal" data-bs-target="#AdminModal">
+                Add Staff
+            </button>
+        </div>
+
+
+        <div class="table-responsive">
+            <table class="table" id="form-data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">S.No</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Phone No</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in all_staff %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{i.username}}</td>
+                        <td>{{i.role}}</td>
+                        <td>{{i.phone_number}}</td>
+                        <td>{{i.email}}</td>
+                        <td>
+                            <a href="#" class="btn-edit" data-bs-toggle="modal"
+                                data-bs-target="#edit_AdminModal-{{i.id}}">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="#" class="btn-delete ms-3" data-href="{% url 'delete_staff' i.id %}">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- The Modal -->
+    <div class="modal fade" id="AdminModal" tabindex="-1" aria-labelledby="AdminModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content container-custom">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="AdminModalLabel">Add Staff Form</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form method="post" id="AdminForm" action="{% url 'add_staff' %}">
+                        {% csrf_token %}
+
+                        <div class="col-md-12 form-group">
+                            <input type="text" class="form-control" id="username" name="username" 
+                                placeholder=" " required>
+                            <label for="username" class="form-label">Name</label>
+                        </div>
+
+                        <div class="col-md-12 form-group">
+                            <input type="tel" class="form-control" id="phone_number" name="phone_number" placeholder=" "
+                                maxlength="10" required>
+                            <label for="phone_number" class="form-label">Phone No</label>
+                        </div>
+
+                        <div class="col-md-12 form-group">
+                            <input type="email" class="form-control" id="email" name="email" placeholder=" " required>
+                            <label for="email" class="form-label">Email ID</label>
+                        </div>
+
+                        <div class="col-md-12 form-group">
+                            <select name="role" id="role" class="form-control">
+                                <option value="">--select--</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Receptionist">Receptionist</option>
+                                <option value="Chef">Chef</option>
+                                <option value="Waiter">Waiter</option>
+                            </select>
+                            <label for="role" class="form-label">Role</label>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="col-md-12 form-group position-relative">
+                            <input type="password" class="form-control" id="password" name="password" placeholder=" "
+                                required>
+                            <label for="password" class="form-label">Password</label>
+                            <span class="position-absolute top-50 end-0 translate-middle-y me-3"
+                                onclick="togglePasswordVisibility('password', 'passwordIcon')" style="cursor: pointer;">
+                                <i id="passwordIcon" class="fas fa-eye"></i>
+                            </span>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="col-md-12 form-group position-relative">
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                                placeholder=" " required>
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <span class="position-absolute top-50 end-0 translate-middle-y me-3"
+                                onclick="togglePasswordVisibility('confirm_password', 'confirmPasswordIcon')"
+                                style="cursor: pointer;">
+                                <i id="confirmPasswordIcon" class="fas fa-eye"></i>
+                            </span>
+                        </div>
+
+                        <div class="form-buttons">
+                            <button class="btn btn-danger" type="button" data-bs-dismiss="modal" aria-label="hidden">Close</button>
+                            <button class="btn btn-success" type="submit">Add Staff</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% for i in all_staff %}
+    <div class="modal fade" id="edit_AdminModal-{{i.id}}" tabindex="-1" aria-labelledby="edit_AdminModalLabel-{{i.id}}"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content container-custom">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="edit_AdminModalLabel-{{i.id}}">Edit Staff Form</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form method="post" id="AdminForm" action="{% url 'edit_staff' i.id %}">
+                        {% csrf_token %}
+
+                        <div class="col-md-12 form-group">
+                            <input type="text" class="form-control" id="username" name="edit_username"
+                                value="{{ i.username }}" maxlength="15" placeholder=" " required>
+                            <label for="username" class="form-label">Name</label>
+                        </div>
+
+                        <div class="col-md-12 form-group">
+                            <input type="tel" class="form-control" id="phone_number" name="edit_phone_number"
+                                value="{{ i.phone_number }}" placeholder=" " maxlength="10" required>
+                            <label for="phone_number" class="form-label">Phone No</label>
+                        </div>
+
+                        <div class="col-md-12 form-group">
+                            <input type="email" class="form-control" id="email" name="edit_email" value="{{ i.email }}"
+                                placeholder=" " required>
+                            <label for="email" class="form-label">Email ID</label>
+                        </div>
+
+                        <div class="col-md-12 form-group">
+                            <select class="form-control" id="role" name="edit_role">
+                                <option value="{{ i.role }}">{{ i.role }}</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Chef">Chef</option>
+                                <option value="Waiter">Waiter</option>
+                            </select>
+                            <label for="role" class="form-label">Role</label>
+                        </div>
+
+
+                        <div class="form-buttons">
+                            <button class="btn btn-danger" type="button" data-bs-dismiss="modal" aria-label="hidden">Close</button>
+                            <button class="btn btn-success" type="submit">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endfor %}
+
+
+
+
+    {% if messages %}
+    {% for message in messages %}
+    {% if 'success' in message.tags %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var successAlertElement = document.getElementById('floating-alert-success');
+            var successMessage = document.getElementById('floating-alert-success-message');
+
+            successMessage.textContent = "{{ message|safe }}";
+            successAlertElement.style.display = 'block';
+            successAlertElement.classList.add('show');
+
+            setTimeout(function () {
+                successAlertElement.classList.remove('show');
+                setTimeout(() => {
+                    successAlertElement.style.display = 'none';
+                }, 500);
+            }, 3000);
+        });
+    </script>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+
+    {% if messages %}
+    {% for message in messages %}
+    {% if 'error' in message.tags %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var errorAlertElement = document.getElementById('floating-alert-error');
+            var errorMessage = document.getElementById('floating-alert-error-message');
+            errorMessage.textContent = "{{ message|safe }}";
+            errorAlertElement.style.display = 'block';
+            errorAlertElement.classList.add('show');
+
+            setTimeout(function () {
+                successAlertElement.classList.remove('show');
+                setTimeout(() => {
+                    successAlertElement.style.display = 'none';
+                }, 500);
+            }, 3000);
+        });                                        
+    </script>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="{% static 'super_admin/js/index.js' %}"></script>
+    <script>
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteButtons = document.querySelectorAll('.btn-delete');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    const deleteUrl = this.getAttribute('data-href');
+
+                    // SweetAlert2 confirmation modal
+                    Swal.fire({
+                        title: 'Are you sure,?',
+                        text: "You want delete this Staff,This action cannot be undone!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirect to the delete URL if confirmed
+                            window.location.href = deleteUrl;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>
+
+{% endblock content %}

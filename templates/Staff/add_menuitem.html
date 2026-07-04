@@ -1,0 +1,698 @@
+
+   
+{% extends "Staff/base.html" %}
+
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Category</title>
+    <link rel="stylesheet" href="{% static 'super_admin/css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        .dataTables_filter {
+            margin-right: 130px;
+        }
+
+        .container-custom{
+            z-index: 2000;
+            min-width: 1000px;
+            margin-left: -80px;
+            margin-top: 50px;
+        }
+        .add_item_details, .edit_item_details_container{
+            border: solid 1px #828282;
+            border-radius: 5px;
+            padding:30px 30px 15px 30px;
+        }
+        .form-label-2{
+            position: absolute;
+            top: 50%;
+            left: 25px;
+            transform: translateY(-50%);
+            background: #fff;
+            padding: 0 5px;
+            color: #aaa;
+            transition: 0.3s ease all;
+            pointer-events: none;
+        }
+        .form-control:focus ~ .form-label-2,
+        .form-control:not(:placeholder-shown) ~ .form-label-2 {
+            top: 0;
+            transform: translateY(-60%);
+            left: 10%;
+            font-size: 14px;
+            color:#F07054;
+            font-weight: bold;
+        }
+        .btn-xs {
+            padding: 3px 8px;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .d-flex.gap-1 {
+            display: flex;
+            gap: 4px; /* Adjust spacing */
+            align-items: center;
+        }
+        .custom-radio {
+            display: none;
+        }
+
+        /* Custom radio button styling */
+        .radio-label {
+            display: inline-block;
+            padding: 5px 12px;
+            font-size: 15px;
+            font-weight: bold;
+            border: 2px solid #ff5e00;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            user-select: none;
+        }
+
+        /* Hover effect */
+        .radio-label:hover {
+            background-color: #ff9865;
+        }
+
+        /* Checked state */
+        .custom-radio:checked + .radio-label {
+            background-color: #ff9865;
+            color: #000000;
+        }
+        #type{
+            margin-left: 50px;
+        }
+        .img-thumbnail {
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container-fluid table-container display responsive wrap fade-in">
+
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+    
+        <div class="d-flex align-items-center position-relative"> <!-- Added position-relative -->
+            <div id="dataTables_filter_container" class="me-2">        
+            </div>
+            <button type="button" class="btn btn-add"  data-bs-toggle="modal" data-bs-target="#AdminModal">
+                Add MenuItem
+            </button>
+        </div>
+          
+              
+        <div class="table-responsive">
+            <table class="table" id="form-data-table">
+                <thead>
+                    <tr>          
+                    <th scope="col">S.No</th>
+                    <th scope="col">Name</th>          
+                    <th scope="col">Category</th>
+                    <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in menu_items %}
+                        <tr>            
+                            <td>{{ forloop.counter }}</td>    
+                            <td>{{i.name}}</td>
+                            <td>{{i.category}}</td>
+                            <td>
+                                <a href="#" class="btn-edit" data-bs-toggle="modal" data-bs-target="#edit_AdminModal-{{i.id}}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="#" class="btn-delete ms-3" data-href="{% url 'delete_menuitem' i.id %}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr> 
+                    {% endfor %}           
+                </tbody>
+            </table>
+        </div>
+    </div>  
+    
+    
+    <!-- The Modal -->
+    <div class="modal fade" id="AdminModal" tabindex="-1" aria-labelledby="AdminModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content container-custom">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="AdminModalLabel">Add Menu Item Form</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+        
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form  method="post" id="AdminForm" enctype="multipart/form-data" action="{% url 'add_menuitem' %}">
+                        {% csrf_token %}
+    
+                            <div class="row">
+                                <div class="col-md-6 form-group">
+                                    <input type="text" class="form-control" id="name" name="name"  placeholder=" " required>
+                                    <label for="name" class="resto-label">Item Name</label>
+                                </div>
+
+                                <div class="col-md-6 form-group">
+                                    <select  class="form-control" id="category" name="category" required >
+                                    <option value="">--select--</option>
+                                        {% for i in cat_det %}
+                                            <option value="{{i.name}}">{{i.name}}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="category" class="resto-label">Category</label>
+                                </div>
+
+                                <div class="col-md-4 form-group mt-3">
+                                    <select class="form-control" id="gst" name="gst" required>
+                                        <option value="" disabled selected>Select GST</option>
+                                        <option value="0">Nill Rated</option>
+                                        <option value="0">0% (Exempted)</option>
+                                        <option value="5">5%</option>
+                                        <option value="8">8%</option>
+                                        <option value="10">10%</option>
+                                        <option value="12">12%</option>
+                                        <option value="18">18%</option>
+                                    </select>
+                                    <label for="gst" class="resto-label">GST</label>
+                                </div>
+
+                                <div class="col-md-4 form-group mt-3">
+                                    <select class="form-control" id="gst_type" name="gst_type" required>
+                                        <option value="" disabled selected>Select GST Type</option>
+                                        <option value="Inclusive">Inclusive</option>
+                                        <option value="Exclusive">Exclusive</option>
+                                    </select>
+                                    <label for="gst" class="resto-label">GST Type</label>
+                                </div>
+
+                                <div class="col-md-4 form-group mt-3">
+                                    <input type="text" class="form-control" id="hsn_code" name="hsn_code"  placeholder=" " required>
+                                    <label for="hsn_code" class="resto-label">HSN Code</label>
+                                </div>
+
+                                <div class="col-md-8 form-group">
+                                    <textarea class="form-control" id="description" name="description" placeholder=" " required></textarea>
+                                    <label for="description" class="form-label">Description</label>
+                                </div>
+
+                                <div class="col-md-4 form-group">
+                                    <div id="type" class=" mt-4 d-flex gap-4" >
+                                        <input type="radio" id="veg" name="type" value="Veg" class="custom-radio ml-3" required>
+                                        <label for="veg" class="radio-label">Veg</label>
+                                
+                                        <input type="radio" id="non-Veg" name="type" value="Non-Veg" class="custom-radio">
+                                        <label for="non-Veg" class="radio-label">Non-Veg</label>
+                                    </div>
+                                </div>
+                                                    
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="add_item_details">  <!-- Updated Class Name -->
+                                    <div class="row item_details">
+                                        <div class="col-md-3 form-group">
+                                            <input type="text" class="form-control" name="size" placeholder="Size" required>
+                                            <label class="form-label-2">Size</label>
+                                        </div>
+                            
+                                        <div class="col-md-2 form-group">
+                                            <input type="number" class="form-control" name="table_price" placeholder="Table Price" required>
+                                            <label class="form-label-2">Table Price</label>
+                                        </div>
+
+                                        <div class="col-md-2 form-group">
+                                            <input type="number" class="form-control" name="takeaway_price" placeholder="Takeaway price" required>
+                                            <label class="form-label-2">Takeaway Price</label>
+                                        </div>
+
+                                        <div class="col-md-2 form-group">
+                                            <input type="number" class="form-control" name="swiggy_price" placeholder="Swiggy price" required>
+                                            <label class="form-label-2">Swiggy Price</label>
+                                        </div>
+
+                                        <div class="col-md-2 form-group">
+                                            <input type="number" class="form-control" name="zomoto_price" placeholder="Zomoto price" required>
+                                            <label class="form-label-2">Zomoto Price</label>
+                                        </div>
+                            
+                                        <div class="col-md-1 form-group d-flex gap-1">
+                                            <button type="button" class="btn btn-xs btn-success add-more">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> 
+                            <div class="d-flex align-items-center gap-5">
+                                <div class="col-md-6 form-group mt-5">
+                                    <input type="file" class="form-control" id="imageInput" name="image" placeholder=" " multiple   required>
+                                    <label for="image" class="form-label">Image</label>
+                                </div>
+                                <div id="imagePreviewContainer" class="mt-2 d-none">
+                                    <img id="imagePreview" src="#" alt="Selected Image" class="img-thumbnail" width="100">
+                                </div>
+                            </div>
+                            <div class="form-buttons">
+                                <button class="btn btn-danger" type="button" data-bs-dismiss="modal" aria-label="hidden">Close</button>
+                                <button class="btn btn-success" type="submit">Add MenuItem</button>
+                            </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div> 
+
+
+    {% for i in menu_items %}
+        <!-- Edit Admin Modal -->
+        <div class="modal fade" id="edit_AdminModal-{{ i.id }}" tabindex="-1" aria-labelledby="edit_AdminModalLabel-{{ i.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content container-custom">
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="edit_AdminModalLabel-{{ i.id }}">Edit Menu Item Form</h4>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="modal-body">
+                        <form method="post" id="EditAdminForm-{{ i.id }}" enctype="multipart/form-data" action="{% url 'edit_menuitem' i.id %}">
+                            {% csrf_token %}
+
+                            <div class="row">
+                                <div class="col-md-6 form-group">
+                                    <input type="text" class="form-control" name="edit_name" value="{{ i.name }}" required>
+                                    <label class="resto-label">Item Name</label>
+                                </div>
+
+                                <div class="col-md-6 form-group">
+                                    <select class="form-control" name="edit_category" required>
+                                        <option value="{{ i.category }}">{{ i.category }}</option>
+                                        {% for j in cat_det %}
+                                            <option value="{{ j.name }}">{{ j.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label class="resto-label">Category</label>
+                                </div>
+
+                                <div class="col-md-4 form-group mt-3">
+                                    <select class="form-control" name="edit_gst" required>
+                                        <option value="" disabled>-- Select GST --</option>
+                                        <option value="0%" {% if i.gst == "0%" %}selected{% endif %}>0% (Exempted)</option>
+                                        <option value="5%" {% if i.gst == "5%" %}selected{% endif %}>5%</option>
+                                        <option value="5%" {% if i.gst == "8%" %}selected{% endif %}>8%</option>
+                                        <option value="5%" {% if i.gst == "10%" %}selected{% endif %}>10%</option>
+                                        <option value="12%" {% if i.gst == "12%" %}selected{% endif %}>12%</option>
+                                        <option value="18%" {% if i.gst == "18%" %}selected{% endif %}>18%</option>
+                                        <option value="28%" {% if i.gst == "28%" %}selected{% endif %}>28%</option>
+                                    </select>
+                                    <label class="resto-label">GST</label>
+                                </div>
+                                
+                                <div class="col-md-4 form-group mt-3">
+                                    <select class="form-control" id="gst_type" name="gst_type" required>
+                                        <option value="" disabled selected>Select GST Type</option>
+                                        <option value="Inclusive" {% if i.gst_type == "Inclusive" %}selected{% endif %} >Inclusive</option>
+                                        <option value="Exclusive" {% if i.gst_type == "Exclusive" %}selected{% endif %}>Exclusive</option>
+                                    </select>
+                                    <label for="gst" class="resto-label">GST Type</label>
+                                </div>
+
+                                <div class="col-md-4 form-group mt-3">
+                                    <input type="text" class="form-control" name="edit_hsn_code" value="{{ i.hsn_code }}" required>
+                                    <label class="resto-label">HSN Code</label>
+                                </div>
+
+                                <div class="col-md-8 form-group">
+                                    <textarea class="form-control" name="edit_description" required>{{ i.description }}</textarea>
+                                    <label class="form-label">Description</label>
+                                </div>
+
+                                <div class="col-md-4 form-group">
+                                    <div id="type" class="mt-4 d-flex gap-3">
+                                        <input type="radio" id="edit_veg_{{ i.id }}" name="edit_type" value="Veg" class="custom-radio" {% if i.type == 'Veg' %}checked{% endif %} required>
+                                        <label for="edit_veg_{{ i.id }}" class="radio-label">Veg</label>
+
+                                        <input type="radio" id="edit_nonVeg_{{ i.id }}" name="edit_type" value="Non-Veg" class="custom-radio" {% if i.type == 'Non-Veg' %}checked{% endif %}>
+                                        <label for="edit_nonVeg_{{ i.id }}" class="radio-label">Non-Veg</label>
+                                    </div>
+                                </div>
+                                
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="edit_item_details_container" id="edit_item_details_container-{{ i.id }}">
+                                    {% for detail in menuitems_det %}
+                                        {% if detail.name == i.name %}
+                                            <div class="row item_details">
+                                                <div class="col-md-3 form-group">
+                                                    <input type="text" class="form-control" name="edit_size" value="{{ detail.size }}" required>
+                                                    <label class="form-label-2">Size</label>
+                                                </div>
+
+                                                <div class="col-md-2 form-group">
+                                                    <input type="number" class="form-control" name="edit_table_price" value="{{ detail.table_price }}" required>
+                                                    <label class="form-label-2">Table Price</label>
+                                                </div>
+
+                                                <div class="col-md-2 form-group">
+                                                    <input type="number" class="form-control" name="edit_takeaway_price" value="{{ detail.takeaway_price }}" required>
+                                                    <label class="form-label-2">Takeaway Price</label>
+                                                </div>
+
+                                                <div class="col-md-2 form-group">
+                                                    <input type="number" class="form-control" name="edit_swiggy_price" value="{{ detail.swiggy_price }}" required>
+                                                    <label class="form-label-2">Swiggy Price</label>
+                                                </div>
+
+                                                <div class="col-md-2 form-group">
+                                                    <input type="number" class="form-control" name="edit_zomoto_price" value="{{ detail.zomoto_price }}" required>
+                                                    <label class="form-label-2">Zomoto Price</label>
+                                                </div>
+
+                                                <div class="col-md-1 form-group d-flex gap-1">
+                                                    <button type="button" class="btn btn-xs btn-danger delete-row">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-xs btn-success add-more">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-5">
+                                <div class="col-md-6 form-group mt-5">
+                                    <input type="file" class="form-control editImageInput" name="edit_image" id="editImageInput-{{ i.id }}" multiple>
+                                    <label for="edit_image" class="form-label">Change Image</label>
+                                </div>
+
+                                {% if i.image %}
+                                    <div id="editImagePreviewContainer-{{ i.id }}" class="mt-2">
+                                        <img src="{{ i.image.url }}" alt="Current Image" class="img-thumbnail" width="100">
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-buttons">
+                                <button class="btn btn-danger" type="button" data-bs-dismiss="modal">Close</button>
+                                <button class="btn btn-success" type="submit">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% endfor %}
+
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'error' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                var errorAlertElement = document.getElementById('floating-alert-error');
+                var errorMessage = document.getElementById('floating-alert-error-message');
+                errorMessage.textContent = "{{ message|safe }}";
+                errorAlertElement.style.display = 'block';
+                errorAlertElement.classList.add('show');
+
+                setTimeout(function () {
+                    errorAlertElement.classList.remove('show');
+                    errorAlertElement.style.display = 'none';
+                }, 3000); // 2 seconds delay for success alert
+                });                                        
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            function updateAddMenuButtonVisibility() {
+                let rows = document.querySelectorAll(".add_item_details .item_details");
+                rows.forEach((row, index) => {
+                    let addBtn = row.querySelector(".add-more");
+                    let deleteBtn = row.querySelector(".delete-row");
+
+                    if (addBtn) {
+                        addBtn.style.display = index === rows.length - 1 ? "inline-block" : "none";
+                    }
+
+                    if (deleteBtn) {
+                        deleteBtn.style.display = rows.length > 1 ? "inline-block" : "none";
+                    }
+                });
+            }
+
+            document.addEventListener("click", function (event) {
+                let target = event.target;
+
+                // Handle "Add" button for ADD MENU
+                if (target.closest(".add_item_details .add-more")) {
+                    let container = document.querySelector(".add_item_details");
+                    let lastRow = container.querySelector(".item_details:last-child");
+                    let newRow = lastRow.cloneNode(true);
+
+                    // Reset input values in the new row
+                    newRow.querySelectorAll("input").forEach(input => {
+                        input.value = "";
+                    });
+
+                    let btnContainer = newRow.querySelector(".col-md-1");
+                    btnContainer.innerHTML = `
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-xs btn-success add-more">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button type="button" class="btn btn-xs btn-danger delete-row">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+
+                    container.appendChild(newRow);
+                    updateAddMenuButtonVisibility();
+                }
+
+                // Handle "Delete" button for ADD MENU
+                if (target.closest(".add_item_details .delete-row")) {
+                    target.closest(".item_details").remove();
+                    updateAddMenuButtonVisibility();
+                }
+            });
+
+            updateAddMenuButtonVisibility();
+
+
+            /*** 🔹 EDIT MENU ITEM FUNCTIONALITY 🔹 ***/
+            function updateEditMenuButtonVisibility(container) {
+                let rows = container.querySelectorAll(".item_details");
+                rows.forEach((row, index) => {
+                    let addBtn = row.querySelector(".add-more");
+                    let deleteBtn = row.querySelector(".delete-row");
+
+                    if (addBtn) {
+                        addBtn.style.display = index === rows.length - 1 ? "inline-block" : "none";
+                    }
+
+                    if (deleteBtn) {
+                        deleteBtn.style.display = rows.length > 1 ? "inline-block" : "none";
+                    }
+                });
+            }
+
+            document.addEventListener("click", function (event) {
+                let target = event.target;
+
+                // Handle "Add" button for EDIT MENU
+                if (target.closest(".edit_item_details_container .add-more")) {
+                    let container = target.closest(".edit_item_details_container");
+                    let lastRow = container.querySelector(".item_details:last-child");
+                    let newRow = lastRow.cloneNode(true);
+
+                    newRow.querySelectorAll("input").forEach(input => {
+                        input.value = "";
+                    });
+
+                    let btnContainer = newRow.querySelector(".col-md-1");
+                    btnContainer.innerHTML = `
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-xs btn-danger delete-row">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button type="button" class="btn btn-xs btn-success add-more">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    `;
+
+                    container.appendChild(newRow);
+                    updateEditMenuButtonVisibility(container);
+                }
+
+                // Handle "Delete" button for EDIT MENU
+                if (target.closest(".edit_item_details_container .delete-row")) {
+                    let container = target.closest(".edit_item_details_container");
+                    target.closest(".item_details").remove();
+                    updateEditMenuButtonVisibility(container);
+                }
+            });
+
+            // Initialize button visibility for each edit modal
+            document.querySelectorAll(".edit_item_details_container").forEach(container => {
+                updateEditMenuButtonVisibility(container);
+            });
+        });
+
+    </script>
+
+    
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="{% static 'super_admin/js/index.js' %}"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const imageInput = document.getElementById("imageInput");
+            const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+            const imagePreview = document.getElementById("imagePreview");
+    
+            imageInput.addEventListener("change", function () {
+                const file = this.files[0];
+    
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        imagePreview.src = e.target.result;
+                        imagePreviewContainer.classList.remove("d-none"); // Show preview
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreviewContainer.classList.add("d-none"); // Hide preview if no file is selected
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".editImageInput").forEach(input => {
+                input.addEventListener("change", function () {
+                    const id = this.id.split("-")[1]; // Extract the ID from the input field
+                    const storedImageContainer = document.getElementById(`storedImageContainer-${id}`);
+                    const selectedImageContainer = document.getElementById(`selectedImageContainer-${id}`);
+                    const selectedImage = document.getElementById(`selectedImage-${id}`);
+
+                    if (this.files.length > 0) {
+                        const file = this.files[0];
+                        const reader = new FileReader();
+
+                        reader.onload = function (e) {
+                            selectedImage.src = e.target.result;
+                            selectedImageContainer.style.display = "block"; // Show selected image preview
+                        };
+
+                        reader.readAsDataURL(file);
+
+                        // Hide stored image
+                        if (storedImageContainer) {
+                            storedImageContainer.style.display = "none";
+                        }
+                    } else {
+                        selectedImageContainer.style.display = "none"; // Hide selected image preview
+
+                        // Show stored image back if no new image is selected
+                        if (storedImageContainer) {
+                            storedImageContainer.style.display = "block";
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteButtons = document.querySelectorAll('.btn-delete');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function (event) {
+                    event.preventDefault(); 
+                    const deleteUrl = this.getAttribute('data-href'); 
+
+                    // SweetAlert2 confirmation modal
+                    Swal.fire({
+                        title: 'Are you sure,?',
+                        text: "You want delete this Item,This action cannot be undone!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirect to the delete URL if confirmed
+                            window.location.href = deleteUrl;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+
+</body>
+
+</html>
+
+{% endblock content %}
+
+

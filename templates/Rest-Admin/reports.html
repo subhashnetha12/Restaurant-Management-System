@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script> <!-- Include ApexCharts -->
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+        <!-- Add FontAwesome link for icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+        <style>
+            body {
+                background-color: #f8f9fa;
+            }
+            .card {
+                border-radius: 15px;
+                padding: 20px;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+                font-size: 24px;
+                font-weight: bold;
+            }
+        </style>
+         
+          <style>
+            /* Styling for the table header */
+            thead th {
+              background-color: orange; /* Orange background color */
+              color: white; /* White text color */
+              text-align: center; /* Center-align text */
+            }
+          
+            /* Align the text in the tbody cells to the center */
+            tbody td {
+              text-align: center; /* Center-align text */
+            }
+          
+            /* Remove border and background for buttons */
+            td:last-child .btn {
+              border: none; /* Remove border */
+              border-radius: 0 !important; /* Remove rounded corners */
+              padding: 0; /* Remove padding to remove button box */
+            }
+          
+            /* Remove background for icon buttons */
+            td:last-child .btn i {
+              background: none !important; /* Remove background from icon */
+              color: #1F509A; /* Keep icon color */
+            }
+            thead {
+    background-color: orange;
+}
+
+th {
+    background-color: orange;
+}
+
+        
+          </style>
+      
+    </head>
+    
+<body class="bg-light">
+
+<div class="container mt-4">
+    <!-- <div class="text-center mb-4">
+        <h2>Food that's you loved! 🔥</h2>
+        <p>Delight your taste with our most famous food!!</p>
+    </div> -->
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <h5 class="header">Sales Summary</h5>
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <h5 class="header">Employees Satisfied</h5>
+                <canvas id="employeeChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <h5>Expenses</h5>
+                <div id="expensesChart"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <h5>Sales / Purchase</h5>
+                <div id="salesPurchaseChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<script>
+    // Sales Summary Chart
+    var ctx1 = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+            datasets: [{
+                label: 'Sales',
+                data: [300, 200, 400, 500, 100, 600, 200, 300, 400],
+                backgroundColor: ['#ff8a65', '#ff7043', '#ff5722', '#ff3d00'],
+                borderColor: '#ff5722',
+                borderWidth: 2
+            }]
+        }
+    });
+
+    // Employees Satisfied Chart
+    var ctx2 = document.getElementById('employeeChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+            datasets: [{
+                label: 'Satisfaction Level',
+                data: [3, 2, 4, 5, 3, 4, 5, 4, 3],
+                backgroundColor: 'rgba(255, 167, 38, 0.2)',
+                borderColor: '#ffa726',
+                borderWidth: 2,
+                pointBackgroundColor: '#ff9800'
+            }]
+        }
+    });
+
+    // Expenses Line Chart
+    var options1 = {
+        chart: { type: 'line', height: 250 },
+        series: [
+            { name: "Series 1", data: [10, 40, 35, 50, 49, 60] },
+            { name: "Series 2", data: [20, 30, 45, 35, 50, 55] }
+        ],
+        colors: ['#FF6B6B', '#FFD93D'],
+        stroke: { width: 2, curve: 'smooth' },
+        markers: { size: 4, colors: ['#FF6B6B'], strokeWidth: 2 },
+        xaxis: { categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"] }
+    };
+    new ApexCharts(document.querySelector("#expensesChart"), options1).render();
+
+    // Sales / Purchase Bar Chart
+    var options2 = {
+        chart: { type: 'bar', height: 250 },
+        series: [{ name: "Sales", data: [200, 180, 150, 170, 250, 220, 230, 240, 150, 190] }],
+        colors: ['#FF3B3B'],
+        plotOptions: { bar: { borderRadius: 5, columnWidth: '50%' } },
+        dataLabels: { enabled: false },
+        xaxis: { categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"] }
+    };
+    new ApexCharts(document.querySelector("#salesPurchaseChart"), options2).render();
+</script>
+
+
+
+</body>
+</html>

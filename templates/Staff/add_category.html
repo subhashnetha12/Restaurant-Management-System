@@ -1,0 +1,332 @@
+
+   
+{% extends "Staff/base.html" %}
+
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Category</title>
+    <link rel="stylesheet" href="{% static 'super_admin/css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        .dataTables_filter {
+            margin-right: 130px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container-fluid table-container display responsive wrap fade-in">
+
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+    
+        <div class="d-flex align-items-center position-relative"> <!-- Added position-relative -->
+            <div id="dataTables_filter_container" class="me-2">        
+            </div>
+            <button type="button" class="btn btn-add"  data-bs-toggle="modal" data-bs-target="#AdminModal">
+                Add Category
+            </button>
+        </div>
+          
+              
+        <div class="table-responsive">
+            <table class="table" id="form-data-table">
+                <thead>
+                    <tr>          
+                    <th scope="col">S.No</th>
+                    <th scope="col">Name</th>          
+                    <th scope="col">Code</th>
+                    <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in cat_det %}
+                        <tr>            
+                            <td>{{ forloop.counter }}</td>    
+                            <td>{{i.name}}</td>
+                            <td>{{i.code}}</td>
+                            <td>
+                                <a href="#" class="btn-edit" data-bs-toggle="modal" data-bs-target="#edit_AdminModal-{{i.id}}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="#" class="btn-delete ms-3" data-href="{% url 'delete_category' i.id %}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr> 
+                    {% endfor %}           
+                </tbody>
+            </table>
+        </div>
+    </div>  
+    
+    
+    <!-- The Modal -->
+    <div class="modal fade" id="AdminModal" tabindex="-1" aria-labelledby="AdminModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content container-custom">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="AdminModalLabel">Add Category Form</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+        
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form method="post" id="AdminForm" enctype="multipart/form-data" action="{% url 'add_category'%}">
+                        {% csrf_token %}
+    
+                            <div class="col-md-12 form-group">
+                                <input type="text" class="form-control" id="name" name="name" maxlength="15" placeholder=" " required>
+                                <label for="name" class="form-label">Name</label>
+                            </div>
+                            
+                            <div class="col-md-12 form-group">
+                                <input type="number" class="form-control"  id="code" name="code"  placeholder=" "  maxlength="10" required>
+                                <label for="code" class="form-label">Code</label>
+                            </div>
+
+                            <div class="col-md-12 form-group">
+                                <textarea class="form-control" id="description" name="description" placeholder=" " required></textarea>
+                                <label for="description" class="form-label">Description</label>
+                            </div>
+                            
+                            <div class="col-md-12 form-group">
+                                <input type="file" class="form-control" id="imageInput" name="image" required>
+                                <label for="imageInput" class="form-label">Image</label>
+                            </div>
+                            
+                            <div id="imagePreviewContainer" class="mt-2 d-none">
+                                <img id="imagePreview" src="#" alt="Selected Image" class="img-thumbnail" width="100">
+                            </div>
+    
+                            <div class="form-buttons">
+                                <button class="btn btn-danger" type="button" data-bs-dismiss="modal" aria-label="hidden">Close</button>
+                                <button class="btn btn-success" type="submit">Add Category</button>
+                            </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div> 
+
+    {% for i in cat_det %}
+        <div class="modal fade" id="edit_AdminModal-{{i.id}}" tabindex="-1" aria-labelledby="edit_AdminModalLabel-{{i.id}}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content container-custom">
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="edit_AdminModalLabel-{{i.id}}">Edit Category Form</h4>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+            
+                    <!-- Modal Body -->
+                    <div class="modal-body">
+                        <form  method="post" id="AdminForm" enctype="multipart/form-data" action="{% url 'edit_category' i.id %}">
+                            {% csrf_token %}
+        
+                                <div class="col-md-12 form-group">
+                                    <input type="text" class="form-control" id="name" name="edit_name" value="{{i.name}}" maxlength="15" placeholder=" " required>
+                                    <label for="name" class="form-label">Category Name</label>
+                                </div>
+                                
+                                <div class="col-md-12 form-group">
+                                    <input type="number" class="form-control"  id="code" name="edit_code" value="{{i.code}}"  placeholder=" "  maxlength="10" required>
+                                    <label for="code" class="form-label">Code</label>
+                                </div>
+
+                                <div class="col-md-12 form-group">
+                                    <textarea class="form-control" id="description" name="edit_description"  placeholder=" " required>{{i.description}}</textarea>
+                                    <label for="description" class="form-label">Description</label>
+                                </div>
+
+                                <div class="col-md-12 form-group">
+                                    <input type="file" class="form-control editImageInput" id="editImageInput-{{ i.id }}" name="edit_image">
+                                    <label for="editImageInput-{{ i.id }}" class="form-label">Change Image</label>
+                                </div>
+                                
+                                <!-- Stored image from database -->
+                                {% if i.image %}
+                                    <div class="mt-2 storedImageContainer" id="storedImageContainer-{{ i.id }}">
+                                        <img src="{{ i.image.url }}" alt="Current Image" class="img-thumbnail" width="100" id="storedImage-{{ i.id }}">
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Selected image preview (Initially hidden) -->
+                                <div class="mt-2 selectedImageContainer" id="selectedImageContainer-{{ i.id }}" style="display: none;">
+                                    <img id="selectedImage-{{ i.id }}" class="img-thumbnail" width="100">
+                                </div>
+                                
+                                <div class="form-buttons">
+                                    <button class="btn btn-danger" type="button" data-bs-dismiss="modal" aria-label="hidden">Close</button>
+                                    <button class="btn btn-success" type="submit">Save Changes</button>
+                                </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    {% endfor %}
+    
+
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'error' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                var errorAlertElement = document.getElementById('floating-alert-error');
+                var errorMessage = document.getElementById('floating-alert-error-message');
+                errorMessage.textContent = "{{ message|safe }}";
+                errorAlertElement.style.display = 'block';
+                errorAlertElement.classList.add('show');
+
+                setTimeout(function () {
+                    errorAlertElement.classList.remove('show');
+                    errorAlertElement.style.display = 'none';
+                }, 3000); // 2 seconds delay for success alert
+                });                                        
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="{% static 'super_admin/js/index.js' %}"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const imageInput = document.getElementById("imageInput");
+            const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+            const imagePreview = document.getElementById("imagePreview");
+    
+            imageInput.addEventListener("change", function () {
+                const file = this.files[0];
+    
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        imagePreview.src = e.target.result;
+                        imagePreviewContainer.classList.remove("d-none"); // Show preview
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreviewContainer.classList.add("d-none"); // Hide preview if no file is selected
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".editImageInput").forEach(input => {
+                input.addEventListener("change", function () {
+                    const id = this.id.split("-")[1]; // Extract the ID from the input field
+                    const storedImageContainer = document.getElementById(`storedImageContainer-${id}`);
+                    const selectedImageContainer = document.getElementById(`selectedImageContainer-${id}`);
+                    const selectedImage = document.getElementById(`selectedImage-${id}`);
+
+                    if (this.files.length > 0) {
+                        const file = this.files[0];
+                        const reader = new FileReader();
+
+                        reader.onload = function (e) {
+                            selectedImage.src = e.target.result;
+                            selectedImageContainer.style.display = "block";
+                        };
+
+                        reader.readAsDataURL(file);
+
+                        // Hide stored image
+                        if (storedImageContainer) {
+                            storedImageContainer.style.display = "none";
+                        }
+                    } else {
+                        selectedImageContainer.style.display = "none"; // Hide selected image preview
+
+                        // Show stored image back if no new image is selected
+                        if (storedImageContainer) {
+                            storedImageContainer.style.display = "block";
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteButtons = document.querySelectorAll('.btn-delete');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function (event) {
+                    event.preventDefault(); 
+                    const deleteUrl = this.getAttribute('data-href'); 
+
+                    // SweetAlert2 confirmation modal
+                    Swal.fire({
+                        title: 'Are you sure,?',
+                        text: "You want delete this category,This action cannot be undone!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirect to the delete URL if confirmed
+                            window.location.href = deleteUrl;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+
+</body>
+
+</html>
+
+{% endblock content %}
+
+

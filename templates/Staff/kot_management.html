@@ -1,0 +1,179 @@
+
+{% extends "Staff/base.html" %}
+
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Category</title>
+    <link rel="stylesheet" href="{% static 'super_admin/css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        .dataTables_filter {
+            margin-right: 130px;
+        }
+        .container-custom{
+            min-width: 700px;
+        }
+        .status {
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 9999px;
+        }
+
+        .status-green {
+            background-color: #c6f6d5;
+            color: #2f855a;
+        }
+
+        .status-blue {
+            background-color: #bee3f8;
+            color: #2b6cb0;
+        }
+        .status-red {
+            background-color: #ff9d9d;
+            color: #b02b2b;
+        }
+        .status-yellow {
+            color: rgb(186, 186, 36); 
+            background-color: #ffffbc; 
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container-fluid table-container display responsive wrap fade-in">
+
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+        
+        <div id="floating-alert-error" class="floating-alert-error">
+            <span id="floating-alert-error-message"></span>
+        </div>
+    
+        <div class="d-flex align-items-center position-relative"> <!-- Added position-relative -->
+            <div id="dataTables_filter_container" class="me-2">        
+            </div>
+        </div>
+          
+              
+        <div class="table-responsive">
+            <table class="table" id="form-data-table">
+                <thead>
+                    <tr>          
+                    <th scope="col">S.No</th>
+                    <th scope="col">KOT NO</th>          
+                    <th scope="col">Order No</th>
+                    <th scope="col">Order Type</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in all_kot %}
+                        <tr>            
+                            <td>{{ forloop.counter }}</td>    
+                            <td>{{i.kot_no}}</td>
+                            <td>{{i.order_no}}</td>
+                            <td>{{i.order_type}}</td>
+                            <td>
+                                <span class="status 
+                                    {% if i.status == 'Ready' %} status-green 
+                                    {% elif i.status == 'Pending' %} status-red 
+                                    {% else %} status-blue {% endif %}">
+                                    {{ i.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="#" class="btn-edit" data-bs-toggle="modal" data-bs-target="#AdminModal-{{i.id}}">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr> 
+                    {% endfor %}           
+                </tbody>
+            </table>
+        </div>
+    </div>  
+
+    {% for i in all_kot %}
+        <div class="modal fade" id="AdminModal-{{i.id}}" tabindex="-1" aria-labelledby="AdminModalLabel-{{i.id}}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content container-custom">
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="AdminModalLabel-{{i.id}}">Order Items</h4>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <!-- Modal Body -->
+                    <div class="modal-body">
+
+                        <ul class="list-unstyled">
+                            {% for j in kot_det %}
+                                {% if j.kot_no == i.kot_no %}
+                                    <li class="mb-2">
+                                        <div class="d-flex justify-content-between align-items-center border p-2 rounded">
+                                            <h5 class="mb-0" id="order-name_{{ forloop.counter }}">{{ j.order_item }}-({{ j.size }})</h5>
+                                            <h6 class="mb-0 text-muted" id="modalQty_{{ forloop.counter }}">Qty: {{ j.quantity }}</h6>
+                                        </div>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                        <div class="form-buttons mt-4">
+                            <button class="btn btn-danger" type="button" data-bs-dismiss="modal" aria-label="hidden">Close</button>
+                            {% if i.status == "Pending" %}
+                                <form method="POST">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="kot_id" value="{{ i.id }}">
+                                    <button type="submit" class="btn btn-success ">Ready</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    {% endfor %}
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000); // 2 seconds delay for success alert
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="{% static 'super_admin/js/index2.js' %}"></script>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</body>
+
+</html>
+
+{% endblock content %}    

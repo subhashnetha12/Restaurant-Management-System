@@ -1,0 +1,423 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'app1/css/homepage3.css' %}">
+    {% block styles %}
+
+
+    {% endblock %}
+</head>
+
+<body>
+    <!-- SIDEBAR -->
+    <section id="sidebar" class="toggle_hide">
+        <div class="logo-wrapper logo-wrapper-center">
+            <a href="#" data-bs-original-title="" title="">
+                <img class="img-fluid for-white" src="{% static 'images/c-logo.png' %}" alt="logo">
+            </a>
+            <div class="back-btn">
+                <i class="fa fa-angle-left"></i>
+            </div>
+            <div class="toggle-sidebar">
+                <i class="ri-apps-2-line status_toggle middle sidebar-toggle"></i>
+            </div>
+        </div>
+        <div class="logo-icon-wrapper">
+            <a href="#">
+                <img class="img-fluid main-logo" src="{% static 'images/logo.png' %}" alt="logo">
+            </a>
+        </div>
+        <div class="sidebar-main">
+            <div class="left-arrow" id="left-arrow">
+                <i data-feather="arrow-left"></i>
+            </div>
+
+            <div id="sidebar-menu">
+                {% if data.role == 'Receptionist' %}         
+                <ul class="sidebar-links" id="simple-bar">
+                    <li class="back-btn"></li>
+
+                    <li class="sidebar-list">
+                        <a class="sidebar-link sidebar-title link-nav" href="{% url 'staff_dashboard' %}">
+                            <i class="ri-home-line"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>            
+                    
+                    <li class="sidebar-list">
+                        <a class="sidebar-link sidebar-title link-nav" href="{% url 'add_table' %}">
+                            <i class="ri-table-line"></i>
+                            <span>Tables</span> 
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-list">
+                        <a class="sidebar-link sidebar-title link-nav" href="{% url 'add_category' %}">
+                            <i class="ri-bowl-line"></i>
+                            <span>Category</span>
+                        </a>
+                    </li>                    
+
+                    <li class="sidebar-list">
+                        <a class="sidebar-link sidebar-title link-nav" href="{% url 'add_menuitem' %}">
+                            <i class="ri-restaurant-line"></i>
+                            <span>Menu Item</span>
+                        </a>
+                    </li>    
+                    
+                    <li class="sidebar-list">
+                        <a class="sidebar-link sidebar-title link-nav" href="{% url 'place_order' %}">
+                            <i class="ri-file-list-line"></i>
+                            <span>Orders</span> 
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-list">
+                        <a class="sidebar-link sidebar-title link-nav" href="{% url 'takeaway_orders' %}">
+                            <i class="ri-takeaway-line"></i>
+                            <span>Takeaway Orders</span> 
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-list">
+                        <a class="sidebar-link sidebar-title link-nav" href="{% url 'all_orders' %}">
+                            <i class="ri-archive-line"></i>
+                            <span>All Orders</span> 
+                        </a>
+                    </li>
+                </ul>
+                {% endif %}
+
+                {% if data.role == 'Chef' %}         
+                <ul class="sidebar-links" id="simple-bar">
+                    <li class="back-btn"></li>
+
+                    <li class="sidebar-list">
+                        <a class="sidebar-link sidebar-title link-nav" href="{% url 'staff_dashboard' %}">
+                            <i class="ri-home-line"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>          
+                    <li class="sidebar-list">
+                        <a class="sidebar-link sidebar-title link-nav" href="{% url 'pending_kots' %}">
+                            <i class="ri-bowl-line"></i>
+                            <span>Pending Kots</span>
+                        </a>
+                    </li>    
+                    <li class="sidebar-list">
+                        <a class="sidebar-link sidebar-title link-nav" href="{% url 'kot_management' %}">
+                            <i class="ri-bowl-line"></i>
+                            <span>KOT Management</span>
+                        </a>
+                    </li>                             
+                </ul>
+                {% endif %}
+            </div>
+
+            <div class="right-arrow" id="right-arrow">
+                <i data-feather="arrow-right"></i>
+            </div>
+        </div>
+    </section>
+    <!-- SIDEBAR -->
+
+
+
+    <!-- NAVBAR -->
+    <section id="content">
+        <!-- NAVBAR -->
+        <nav>
+            <div class="header-logo-wrapper p-0">
+                <div class="logo-wrapper">
+                    <a href="#">
+                        <img class="img-fluid main-logo" src="{% static 'images/1.png' %}" alt="logo">
+                        <img class="img-fluid white-logo" src="{% static 'images/1-white.png' %}" alt="logo">
+                    </a>
+                </div>
+                 <div class="toggle-sidebar">
+                     <i class="status_toggle middle sidebar-toggle" data-feather="align-center"></i>
+                    <a href="#">
+                        <img class="img-fluid for-light" src="{% static 'images/full-white.png' %}" alt="logo">
+                        <img class="img-fluid for-dark" src="{% static 'images/full-white.png' %}" alt="logo">
+                    </a>
+                </div>
+            </div>
+            <!-- <div class="welcome-title">
+                <h5>Food that's you loved!<img src="{% static 'images/header.gif' %}" alt=""></h5>
+                <span>Delight your taste with our most famous food !!</span>
+            </div> -->
+            <div class="nav-right col-xl-6 col-5 pull-right right-header p-0">
+                <ul class="nav-menus">
+                    <li class="search-icon">
+                        <span class="header-search">
+                            <i class="ri-search-line"></i>
+                        </span>
+                    </li>
+                    <li class="onhover-dropdown">
+                        <div class="notification-box">
+                            <i class="ri-notification-line"></i>
+                            <span class="badge rounded-pill badge-theme">4</span>
+                        </div>
+                        <ul class="notification-dropdown onhover-show-div">
+                            <li>
+                                <i class="ri-notification-line"></i>
+                                <h4 class="mb-0">Notifications</h4>
+                            </li>
+                            <li>
+                                <p>
+                                    <i class="fa fa-circle me-2 font-primary"></i>Delivery processing
+                                    <span class="pull-right">10 min.</span>
+                                </p>
+                            </li>
+                            <li>
+                                <p>
+                                    <i class="fa fa-circle me-2 font-success"></i>Order Complete
+                                    <span class="pull-right">1 hr</span>
+                                </p>
+                            </li>
+                            <li>
+                                <p>
+                                    <i class="fa fa-circle me-2 font-info"></i>Tickets Generated
+                                    <span class="pull-right">3 hr</span>
+                                </p>
+                            </li>
+                            <li>
+                                <p>
+                                    <i class="fa fa-circle me-2 font-danger"></i>Delivery Complete
+                                    <span class="pull-right">6 hr</span>
+                                </p>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary" href="#">Check all notifications</a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    
+                    <li class="onhover-dropdown">
+                        <div class="messages-box">
+                            <i class="ri-message-3-line"></i>
+                        </div>
+                        <ul class="messages-dropdown onhover-show-div">
+                            <li>
+                                <i class="ri-message-3-line"></i>
+                                <h4 class="mb-0">Messages</h4>
+                            </li>
+                            <li>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="{% static 'images/1.jpg' %}" alt="">
+                                    <div>
+                                        <h5>Nullam tempor</h5>
+                                        <p>Curabitur facilisis ,mnkjnvxc kcxvkb kcjxvxc .</p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="{% static 'images/1.jpg' %}" alt="">
+                                    <div>
+                                        <h5>Nullam tempor</h5>
+                                        <p>Curabitur facilisis erat viverra.</p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="{% static 'images/1.jpg' %}" alt="">
+                                    <div>
+                                        <h5>Nullam tempor</h5>
+                                        <p>Curabitur facilisis erat viverra.</p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary" href="#">Go to Inbox</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="profile-nav onhover-dropdown pe-0 me-0">
+                        <div class="media profile-media">
+                            <img class="user-profile rounded-circle" src="{% static 'images/1.jpg' %}" alt="">
+                            <div class="media-body">
+                                <span>{{data.username}}</span>
+                                <p class="mb-0 font-roboto">{{data.role}}<i class="middle ri-arrow-down-s-line"></i></p> <!-- Role on the second line -->
+                            </div>
+                        </div>
+                        <ul class="profile-dropdown onhover-show-div">
+                            <!-- <li>
+                                <a href="#">
+                                    <i data-feather="users"></i>
+                                    <span>Users</span>
+                                </a>
+                            </li> -->
+                            <!-- <li>
+                                <a href="#">
+                                    <i data-feather="archive"></i>
+                                    <span>Orders</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#">
+                                    <i data-feather="phone"></i>
+                                    <span>Spports Tickets</span>
+                                </a>
+                            </li> -->
+                            <li>
+                                <a href="#">
+                                    <i data-feather="settings"></i>
+                                    <span>Settings</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a  href="{% url 'signout' %}">
+                                    <i data-feather="log-out"></i>
+                                    <span>Log out</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="input-box">
+                <i class="ri-search-line"></i>
+                <input class="search-box" type="search" placeholder="What are you looking for?">
+                <i class="close-icon" data-feather="x"></i>
+            </div>
+        </nav>
+        <!-- NAVBAR -->
+
+        <!-- Backdrop element at the root level -->
+        <div id="page-backdrop" class="page-backdrop"></div>
+        <!-- MAIN -->
+        <main>
+            {% block content %}
+            
+            {% endblock %}
+        </main>
+    </section>
+
+    
+    <!-- Bootstrap JS (Ensure it's included) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="{% static 'app1/js/base.js' %}"></script>
+
+    <script>
+        feather.replace(); // This will render all icons with the 'data-feather' attribute.
+    </script>
+
+    <script>
+
+
+        // SIDEBAR js //
+        const allDropdown = document.querySelectorAll('#sidebar .side-dropdown');
+        const sidebar = document.getElementById('sidebar');
+
+        allDropdown.forEach(item => {
+            const a = item.parentElement.querySelector('a:first-child');
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                // Toggle the current dropdown
+                this.classList.toggle('active');
+                item.classList.toggle('show');
+            });
+        });
+
+
+        $(document).ready(function () {
+            var currentURL = window.location.href;
+            $('#sidebar .sidebar-link').each(function () {
+                if (this.href === currentURL) {
+                    $(this).addClass('active');
+                    $(this).closest('.sidebar-list').addClass('active-parent'); 
+                }
+            });
+        });
+
+        
+
+        // SIDEBAR COLLAPSE //
+        const toggleSidebar = document.querySelector('nav .toggle-sidebar');
+        const allSideDivider = document.querySelectorAll('#sidebar .divider');
+
+        if (sidebar.classList.contains('hide')) {
+            allSideDivider.forEach(item => {
+                item.textContent = ''
+            })
+            allDropdown.forEach(item => {
+                const a = item.parentElement.querySelector('a:first-child');
+                a.classList.remove('active');
+                item.classList.remove('show');
+            })
+        } else {
+            allSideDivider.forEach(item => {
+                item.textContent = item.dataset.text;
+            })
+        }
+
+        toggleSidebar.addEventListener('click', function () {
+            sidebar.classList.toggle('hide');
+            sidebar.classList.toggle('toggle_hide');
+        })
+
+
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.getElementById("sidebar");
+            const backIcon = document.querySelector(".back-btn i.fa-angle-left");
+
+            // Hide the sidebar by default when the page loads
+            if (window.innerWidth <= 992) {
+                sidebar.classList.add("hide");
+            }
+
+            if (backIcon) {
+                backIcon.addEventListener("click", function (event) {
+                    if (window.innerWidth <= 992) { // Check if the screen size is small or medium
+                        sidebar.classList.add("hide"); // Ensure sidebar is hidden
+                        sidebar.classList.remove("show"); // Remove the show class if it exists
+                    }
+                    event.stopPropagation(); // Prevent event bubbling
+                });
+            }
+        });
+
+
+    
+
+
+    </script>
+    {% block scripts %}
+    {% endblock %}
+
+</body>
+
+</html>
