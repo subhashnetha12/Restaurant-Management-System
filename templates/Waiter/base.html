@@ -14,6 +14,25 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             padding: 10px 20px;
         }
+        .navbar-brand {
+            font-weight: 700;
+            color: #f07054;
+        }
+        .nav-link {
+            font-weight: 600;
+            color: #333;
+            border-radius: 6px;
+            padding: 8px 12px;
+        }
+        .nav-link:hover {
+            background-color: #fff3ef;
+            color: #f07054;
+        }
+        .nav-link.active {
+            background-color: #f07054;
+            color: #fff !important;
+            box-shadow: 0 4px 12px rgba(240, 112, 84, 0.28);
+        }
         .profile-img {
             width: 40px;
             height: 40px;
@@ -45,9 +64,23 @@
     </style>
 </head>
 <body>
+    {% with current_url=request.resolver_match.url_name %}
     <div class="container-fluid">
         <nav class="navbar navbar-expand-lg navbar-light mt-2">
-            <a class="navbar-brand" href="#">{{ data. }}</a>
+            <a class="navbar-brand" href="{% url 'staff_dashboard' %}">Waiter</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#waiterNavbar" aria-controls="waiterNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="waiterNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link {% if current_url == 'staff_dashboard' or current_url == 'waiter_place_order' or current_url == 'w_addmore_items' %}active{% endif %}" href="{% url 'staff_dashboard' %}">Tables</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if current_url == 'waiter_ready_kots' %}active{% endif %}" href="{% url 'waiter_ready_kots' %}">KOT</a>
+                    </li>
+                </ul>
+            </div>
             <div class="ms-auto dropdown">
                 <div class="profile-dropdown d-flex align-items-center" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="me-2">{{ data.username }}</span>
@@ -60,5 +93,6 @@
             </div>
         </nav>
     </div>
+    {% endwith %}
 </body>
 </html>

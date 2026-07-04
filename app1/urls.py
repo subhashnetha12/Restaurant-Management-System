@@ -50,6 +50,7 @@ urlpatterns = [
     path('waiter_place_order', waiter_place_order, name='waiter_place_order'),
 
     path('w_addmore_items/<str:order_no>', w_addmore_items, name='w_addmore_items'),
+    path('waiter_ready_kots', waiter_ready_kots, name='waiter_ready_kots'),
 
     
     path('landing_page/', landing_page, name='landing_page'),

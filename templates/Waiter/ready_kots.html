@@ -1,0 +1,324 @@
+{% include 'Waiter/base.html' %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiter KOT</title>
+    <link rel="stylesheet" href="{% static 'messages.css' %}">
+    <style>
+        body {
+            background-color: #f6f7fb;
+            font-family: 'Poppins', sans-serif;
+        }
+        .kot-page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 22px 14px 34px;
+        }
+        .page-title {
+            color: #242424;
+            font-size: 26px;
+            font-weight: 800;
+            margin: 8px 0 16px;
+        }
+        .kot-tabs {
+            background: #ffffff;
+            border: 1px solid #eceef3;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 18px;
+            padding: 8px;
+            position: sticky;
+            top: 8px;
+            z-index: 10;
+        }
+        .kot-tabs .nav-link {
+            border: 0;
+            border-radius: 7px;
+            color: #3b3b3b;
+            font-size: 18px;
+            font-weight: 800;
+            min-height: 54px;
+            width: 100%;
+        }
+        .kot-tabs .nav-link.active {
+            background: #f07054;
+            color: #ffffff;
+        }
+        .count-pill {
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 999px;
+            display: inline-block;
+            font-size: 14px;
+            line-height: 1;
+            margin-left: 8px;
+            min-width: 30px;
+            padding: 7px 9px;
+        }
+        .nav-link.active .count-pill {
+            background: rgba(255, 255, 255, 0.22);
+        }
+        .kot-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+        .kot-card {
+            background: #ffffff;
+            border: 1px solid #eceef3;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(21, 24, 33, 0.08);
+            padding: 18px;
+            text-align: left;
+        }
+        .kot-card-header {
+            align-items: flex-start;
+            display: flex;
+            gap: 14px;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .kot-title {
+            color: #ff5e00;
+            font-size: 17px;
+            font-weight: 800;
+            margin: 0;
+            overflow-wrap: anywhere;
+            text-transform: uppercase;
+        }
+        .status-badge {
+            border-radius: 999px;
+            color: #ffffff;
+            flex: 0 0 auto;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 7px 11px;
+        }
+        .status-pending {
+            background: #f07054;
+        }
+        .status-served {
+            background: #28a745;
+        }
+        .order-info {
+            background: #f8f9fb;
+            border-radius: 8px;
+            color: #333333;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            padding: 12px;
+        }
+        .items-title {
+            color: #202020;
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .kot-items {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .kot-items li {
+            align-items: center;
+            background: #f8f9fb;
+            border-radius: 7px;
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            margin-bottom: 7px;
+            padding: 11px 12px;
+        }
+        .item-name {
+            color: #ff5e00;
+            font-size: 16px;
+            font-weight: 800;
+        }
+        .item-qty {
+            color: #202020;
+            font-size: 15px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .served-btn {
+            background-color: #28a745;
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 17px;
+            font-weight: 800;
+            margin-top: 14px;
+            min-height: 52px;
+            padding: 12px 14px;
+            width: 100%;
+        }
+        .served-btn:hover {
+            background-color: #218838;
+        }
+        .empty-state {
+            background: #ffffff;
+            border: 1px dashed #cfd4dc;
+            border-radius: 8px;
+            color: #667085;
+            font-size: 17px;
+            font-weight: 700;
+            margin-top: 16px;
+            padding: 34px 18px;
+            text-align: center;
+        }
+        @media (max-width: 900px) {
+            .kot-page {
+                padding: 18px 10px 28px;
+            }
+            .page-title {
+                font-size: 24px;
+            }
+            .kot-grid {
+                grid-template-columns: 1fr;
+            }
+            .kot-tabs .nav-link {
+                font-size: 17px;
+                min-height: 58px;
+            }
+        }
+        @media (max-width: 520px) {
+            .kot-card-header,
+            .kot-items li {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+            .status-badge,
+            .item-qty {
+                white-space: normal;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div id="floating-alert-success" class="floating-alert-success">
+            <span id="floating-alert-success-message"></span>
+        </div>
+
+        <main class="kot-page">
+            <h4 class="page-title">KOT</h4>
+
+            <ul class="nav nav-pills kot-tabs" id="waiterKotTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pending-tab" data-bs-toggle="pill" data-bs-target="#pending-kots" type="button" role="tab" aria-controls="pending-kots" aria-selected="true">
+                        Pending <span class="count-pill">{{ pending_kots|length }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="served-tab" data-bs-toggle="pill" data-bs-target="#served-kots" type="button" role="tab" aria-controls="served-kots" aria-selected="false">
+                        Served <span class="count-pill">{{ served_kots|length }}</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="waiterKotTabsContent">
+                <section class="tab-pane fade show active" id="pending-kots" role="tabpanel" aria-labelledby="pending-tab" tabindex="0">
+                    {% if pending_kots %}
+                        <div class="kot-grid">
+                            {% for kot in pending_kots %}
+                                <article class="kot-card">
+                                    <div class="kot-card-header">
+                                        <p class="kot-title">KOT No: {{ kot.kot_no }}</p>
+                                        <span class="status-badge status-pending">Pending</span>
+                                    </div>
+                                    <div class="order-info">
+                                        Order Type: {{ kot.order_type }}
+                                        {% if kot.table_no %}
+                                            On {{ kot.table_no }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="items-title">Items</div>
+                                    <ul class="kot-items">
+                                        {% for item in kot_items %}
+                                            {% if item.kot_no == kot.kot_no %}
+                                                <li>
+                                                    <span class="item-name">{{ item.order_item }}</span>
+                                                    <span class="item-qty">({{ item.size }}) - x{{ item.quantity }}</span>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                    <form method="POST" action="{% url 'waiter_ready_kots' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="kot_id" value="{{ kot.id }}">
+                                        <button type="submit" class="served-btn">Mark as Served</button>
+                                    </form>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">No pending KOTs ready for service.</div>
+                    {% endif %}
+                </section>
+
+                <section class="tab-pane fade" id="served-kots" role="tabpanel" aria-labelledby="served-tab" tabindex="0">
+                    {% if served_kots %}
+                        <div class="kot-grid">
+                            {% for kot in served_kots %}
+                                <article class="kot-card">
+                                    <div class="kot-card-header">
+                                        <p class="kot-title">KOT No: {{ kot.kot_no }}</p>
+                                        <span class="status-badge status-served">Served</span>
+                                    </div>
+                                    <div class="order-info">
+                                        Order Type: {{ kot.order_type }}
+                                        {% if kot.table_no %}
+                                            On {{ kot.table_no }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="items-title">Items</div>
+                                    <ul class="kot-items">
+                                        {% for item in kot_items %}
+                                            {% if item.kot_no == kot.kot_no %}
+                                                <li>
+                                                    <span class="item-name">{{ item.order_item }}</span>
+                                                    <span class="item-qty">({{ item.size }}) - x{{ item.quantity }}</span>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">No served KOTs for active tables.</div>
+                    {% endif %}
+                </section>
+            </div>
+        </main>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var successAlertElement = document.getElementById('floating-alert-success');
+                    var successMessage = document.getElementById('floating-alert-success-message');
+
+                    successMessage.textContent = "{{ message|safe }}";
+                    successAlertElement.style.display = 'block';
+                    successAlertElement.classList.add('show');
+
+                    setTimeout(function () {
+                        successAlertElement.classList.remove('show');
+                        successAlertElement.style.display = 'none';
+                    }, 3000);
+                });
+            </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</body>
+</html>

@@ -1576,6 +1576,56 @@ def w_addmore_items(request, order_no):
     return render(request, 'Waiter/w_addmore_items.html', context)
 
 
+def waiter_ready_kots(request):
+    user_obj, user_type = get_logged_in_user(request)
+    if not user_obj:
+        return redirect('signin')
+    if user_type != 'staff' or user_obj.role != 'Waiter':
+        return redirect('staff_dashboard')
+
+    data = user_obj
+    occupied_tables = Table_list.objects.filter(
+        status='Occupied'
+    ).exclude(occupied_order_no__isnull=True).exclude(occupied_order_no='')
+    active_order_nos = list(occupied_tables.values_list('occupied_order_no', flat=True))
+
+    if request.method == 'POST':
+        kot_id = request.POST.get('kot_id')
+        kot_entry = get_object_or_404(
+            KOT,
+            id=kot_id,
+            status='Ready',
+            order_type='Dine-In',
+            order_no__in=active_order_nos,
+        )
+        kot_entry.status = 'Served'
+        kot_entry.save()
+
+        Orders.objects.filter(order_no=kot_entry.order_no).update(status='Served')
+        messages.success(request, 'KOT marked as served.')
+        return redirect('waiter_ready_kots')
+
+    pending_kots = KOT.objects.filter(
+        status='Ready',
+        order_type='Dine-In',
+        order_no__in=active_order_nos,
+    ).order_by('-created_at', '-id')
+    served_kots = KOT.objects.filter(
+        status='Served',
+        order_type='Dine-In',
+        order_no__in=active_order_nos,
+    ).order_by('-created_at', '-id')
+    kot_nos = list(pending_kots.values_list('kot_no', flat=True)) + list(served_kots.values_list('kot_no', flat=True))
+    kot_items = KOTItems.objects.filter(kot_no__in=kot_nos)
+
+    return render(request, 'Waiter/ready_kots.html', {
+        'data': data,
+        'pending_kots': pending_kots,
+        'served_kots': served_kots,
+        'kot_items': kot_items,
+    })
+
+
 
 def landing_page(request):
     restaurant = Restaurants.objects.first()

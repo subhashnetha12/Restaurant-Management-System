@@ -165,7 +165,7 @@ class KOT(models.Model):
     order_no = models.CharField(max_length=40)  
     order_type = models.CharField(max_length=40)
     table_no = models.CharField(max_length=100, null=True, blank=True)
-    status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Preparing', 'Preparing'), ('Ready', 'Ready'),('Cancelled', 'Cancelled')], default='Pending')
+    status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Preparing', 'Preparing'), ('Ready', 'Ready'), ('Served', 'Served'),('Cancelled', 'Cancelled')], default='Pending')
     created_at = models.DateTimeField()
 
     def __str__(self):
