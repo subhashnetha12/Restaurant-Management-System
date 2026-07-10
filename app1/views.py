@@ -81,14 +81,21 @@ def staff_dashboard(request):
     pending_kot = KOT.objects.filter(status='Pending').count()
 
 
-    if data.role == 'Receptionist':
+    role = data.role.lower()
+    if role == 'receptionist':
         return render(request,'Staff/reception_dashboard.html',{'data':data, 'tables':tables, 'relevant_orders':relevant_orders})
 
-    if data.role == 'Chef':
+    if role == 'chef':
         return render(request,'Staff/KOT_dashboard.html',{'data':data, 'total_kot':total_kot, 'today_kot':today_kot,'pending_kot':pending_kot})
 
-    if data.role == 'Waiter':
+    if role == 'waiter':
         return render(request,'Waiter/waiter_dashboard.html',{'data':data,'tables':tables, 'relevant_orders':relevant_orders})
+
+    if role == 'inventory':
+        return redirect('inventory_dashboard')
+
+    messages.error(request, 'No dashboard is configured for this role.')
+    return redirect('signin')
 
 
 def signin(request):

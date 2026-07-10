@@ -1,0 +1,11 @@
+{% extends base_template %}{% block title %}Inventory Dashboard{% endblock %}
+{% block content %}<div class="container-fluid py-4"><h2>Inventory dashboard</h2>{% include 'Inventory/_nav.html' %}
+<div class="row g-3 mb-4">
+{% for label,value in cards %}{% endfor %}
+<div class="col-md-3"><div class="card p-3"><small>Stock items</small><h3>{{ item_count }}</h3></div></div>
+<div class="col-md-3"><div class="card p-3 border-warning"><small>Low stock</small><h3>{{ low_stock_count }}</h3></div></div>
+<div class="col-md-3"><div class="card p-3"><small>Active vendors</small><h3>{{ active_vendor_count }}</h3></div></div>
+<div class="col-md-3"><div class="card p-3"><small>Open purchases</small><h3>{{ open_po_count }}</h3></div></div></div>
+<div class="card p-3"><h5>Recent stock movements</h5><div class="table-responsive"><table class="table"><thead><tr><th>Time</th><th>Item</th><th>Type</th><th>In</th><th>Out</th><th>Balance</th></tr></thead><tbody>
+{% for m in recent_movements %}<tr><td>{{ m.movement_at }}</td><td>{{ m.inventory_item.item_name }}</td><td>{{ m.get_movement_type_display }}</td><td>{{ m.quantity_in }}</td><td>{{ m.quantity_out }}</td><td>{{ m.balance_after }} {{ m.unit }}</td></tr>{% empty %}<tr><td colspan="6">No movements yet.</td></tr>{% endfor %}
+</tbody></table></div></div></div>{% endblock %}

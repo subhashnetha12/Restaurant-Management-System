@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from . import inventory_views
 
 urlpatterns = [    
     path('',signin,name='signin'),
@@ -16,6 +17,25 @@ urlpatterns = [
     path('delete_staff/<str:id>', delete_staff, name='delete_staff'),
 
     path('staff_dashboard',staff_dashboard,name='staff_dashboard'),
+    path('inventory/', inventory_views.inventory_dashboard, name='inventory_dashboard'),
+    path('inventory/items/', inventory_views.inventory_list, name='inventory_list'),
+    path('inventory/items/add/', inventory_views.inventory_edit, name='inventory_add'),
+    path('inventory/items/<int:pk>/edit/', inventory_views.inventory_edit, name='inventory_edit'),
+    path('inventory/items/<int:pk>/delete/', inventory_views.inventory_delete, name='inventory_delete'),
+    path('inventory/vendors/', inventory_views.vendor_list, name='vendor_list'),
+    path('inventory/vendors/add/', inventory_views.vendor_edit, name='vendor_add'),
+    path('inventory/vendors/<int:pk>/edit/', inventory_views.vendor_edit, name='vendor_edit'),
+    path('inventory/vendors/<int:pk>/delete/', inventory_views.vendor_delete, name='vendor_delete'),
+    path('inventory/purchases/', inventory_views.purchase_order_list, name='purchase_order_list'),
+    path('inventory/purchases/add/', inventory_views.purchase_order_edit, name='purchase_order_add'),
+    path('inventory/purchases/<int:pk>/', inventory_views.purchase_order_detail, name='purchase_order_detail'),
+    path('inventory/purchases/<int:pk>/edit/', inventory_views.purchase_order_edit, name='purchase_order_edit'),
+    path('inventory/purchases/<int:pk>/receive/', inventory_views.purchase_order_receive, name='purchase_order_receive'),
+    path('inventory/purchase-items/<int:pk>/edit/', inventory_views.purchase_order_item_edit, name='purchase_order_item_edit'),
+    path('inventory/movements/', inventory_views.movement_list, name='movement_list'),
+    path('inventory/movements/add/', inventory_views.movement_create, name='movement_add'),
+    path('inventory/movements/add/<int:item_pk>/', inventory_views.movement_create, name='movement_add_for_item'),
+    path('inventory/report/daily/', inventory_views.daily_inventory_report, name='daily_inventory_report'),
 
     path('add_category', add_category, name='add_category'),
     path('edit_category/<str:id>/', edit_category, name='edit_category'),

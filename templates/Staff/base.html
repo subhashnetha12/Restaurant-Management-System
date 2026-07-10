@@ -55,7 +55,7 @@
             </div>
 
             <div id="sidebar-menu">
-                {% if data.role == 'Receptionist' %}         
+                {% if data.role|lower == 'receptionist' %}
                 <ul class="sidebar-links" id="simple-bar">
                     <li class="back-btn"></li>
 
@@ -110,7 +110,7 @@
                 </ul>
                 {% endif %}
 
-                {% if data.role == 'Chef' %}         
+                {% if data.role|lower == 'chef' %}
                 <ul class="sidebar-links" id="simple-bar">
                     <li class="back-btn"></li>
 
@@ -132,6 +132,16 @@
                             <span>KOT Management</span>
                         </a>
                     </li>                             
+                </ul>
+                {% endif %}
+                {% if data.role|lower == 'inventory' %}
+                <ul class="sidebar-links" id="simple-bar">
+                    <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{% url 'inventory_dashboard' %}"><i class="ri-home-line"></i><span>Inventory dashboard</span></a></li>
+                    <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{% url 'inventory_list' %}"><i class="ri-archive-stack-line"></i><span>Stock items</span></a></li>
+                    <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{% url 'vendor_list' %}"><i class="ri-truck-line"></i><span>Vendors</span></a></li>
+                    <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{% url 'purchase_order_list' %}"><i class="ri-file-list-line"></i><span>Purchases</span></a></li>
+                    <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{% url 'movement_list' %}"><i class="ri-arrow-left-right-line"></i><span>Movements</span></a></li>
+                    <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{% url 'daily_inventory_report' %}"><i class="ri-bar-chart-line"></i><span>Daily report</span></a></li>
                 </ul>
                 {% endif %}
             </div>

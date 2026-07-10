@@ -1,0 +1,10 @@
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <a class="btn btn-outline-primary" href="{% url 'inventory_dashboard' %}">Dashboard</a>
+  <a class="btn btn-outline-primary" href="{% url 'inventory_list' %}">Stock</a>
+  {% if user_type == 'admin' or data.role|lower == 'inventory' %}
+  <a class="btn btn-outline-primary" href="{% url 'vendor_list' %}">Vendors</a>
+  <a class="btn btn-outline-primary" href="{% url 'purchase_order_list' %}">Purchases</a>
+  <a class="btn btn-outline-primary" href="{% url 'movement_list' %}">Movements</a>
+  <a class="btn btn-outline-primary" href="{% url 'daily_inventory_report' %}">Daily report</a>
+  {% endif %}
+</div>

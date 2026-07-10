@@ -11,6 +11,9 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.db import models
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.core.validators import MinValueValidator
+from decimal import Decimal
+from django.utils import timezone
 import qrcode
 from io import BytesIO
 
@@ -228,11 +231,123 @@ class OffersDiscounts(models.Model):
     valid_to = models.DateTimeField()
 
 class Inventory(models.Model):
-    item_name = models.CharField(max_length=255)
-    quantity = models.PositiveIntegerField()
-    min_quantity = models.PositiveIntegerField()
+    item_name = models.CharField(max_length=255, unique=True)
+    quantity = models.DecimalField(max_digits=12, decimal_places=3, default=0, validators=[MinValueValidator(Decimal('0'))])
+    min_quantity = models.DecimalField(max_digits=12, decimal_places=3, default=0, validators=[MinValueValidator(Decimal('0'))])
     unit = models.CharField(max_length=50)
     last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['item_name']
+
+    @property
+    def is_low_stock(self):
+        return self.quantity <= self.min_quantity
+
+    def __str__(self):
+        return f"{self.item_name} ({self.quantity} {self.unit})"
+
+
+class Vendor(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    contact_person = models.CharField(max_length=255, blank=True)
+    phone_number = models.CharField(max_length=30, blank=True)
+    email = models.EmailField(blank=True)
+    address = models.TextField(blank=True)
+    gst_number = models.CharField(max_length=50, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class PurchaseOrder(models.Model):
+    STATUS_CHOICES = [('draft', 'Draft'), ('ordered', 'Ordered'), ('received', 'Received'), ('cancelled', 'Cancelled')]
+    PAYMENT_METHOD_CHOICES = [('cash', 'Cash'), ('card', 'Card'), ('upi', 'UPI'), ('bank', 'Bank Transfer'), ('credit', 'Credit')]
+
+    number = models.CharField(max_length=40, unique=True)
+    vendor = models.ForeignKey(Vendor, on_delete=models.PROTECT, related_name='purchase_orders')
+    purchase_date = models.DateField(default=datetime.now)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    amount_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(Decimal('0'))])
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, blank=True)
+    payment_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    created_by = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-purchase_date', '-id']
+
+    @property
+    def total_amount(self):
+        return sum((item.line_total for item in self.items.all()), Decimal('0'))
+
+    @property
+    def balance_amount(self):
+        return self.total_amount - self.amount_paid
+
+    def __str__(self):
+        return self.number
+
+
+class PurchaseOrderItem(models.Model):
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='items')
+    inventory_item = models.ForeignKey(Inventory, on_delete=models.PROTECT, related_name='purchase_items')
+    quantity_ordered = models.DecimalField(max_digits=12, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))])
+    quantity_received = models.DecimalField(max_digits=12, decimal_places=3, default=0, validators=[MinValueValidator(Decimal('0'))])
+    quantity_posted = models.DecimalField(max_digits=12, decimal_places=3, default=0, editable=False)
+    unit = models.CharField(max_length=50)
+    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0'))])
+
+    class Meta:
+        unique_together = [('purchase_order', 'inventory_item')]
+
+    @property
+    def line_total(self):
+        return self.quantity_ordered * self.unit_cost
+
+    def __str__(self):
+        return f"{self.purchase_order.number} - {self.inventory_item.item_name}"
+
+
+class StockMovement(models.Model):
+    PURCHASE_RECEIVED = 'purchase_received'
+    KITCHEN_ISSUE = 'kitchen_issue'
+    WASTAGE = 'wastage'
+    RETURN_VENDOR = 'return_vendor'
+    ADJUSTMENT = 'adjustment'
+    OPENING_STOCK = 'opening_stock'
+    MOVEMENT_CHOICES = [
+        (PURCHASE_RECEIVED, 'Purchase Received'), (KITCHEN_ISSUE, 'Kitchen Issue'),
+        (WASTAGE, 'Wastage'), (RETURN_VENDOR, 'Return to Vendor'),
+        (ADJUSTMENT, 'Stock Adjustment'), (OPENING_STOCK, 'Opening Stock'),
+    ]
+    inventory_item = models.ForeignKey(Inventory, on_delete=models.PROTECT, related_name='movements')
+    movement_at = models.DateTimeField(default=timezone.now, db_index=True)
+    movement_type = models.CharField(max_length=30, choices=MOVEMENT_CHOICES)
+    quantity_in = models.DecimalField(max_digits=12, decimal_places=3, default=0)
+    quantity_out = models.DecimalField(max_digits=12, decimal_places=3, default=0)
+    unit = models.CharField(max_length=50)
+    reference_type = models.CharField(max_length=50, blank=True)
+    reference_number = models.CharField(max_length=100, blank=True)
+    purchase_cost_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    sale_value = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    created_by = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    balance_after = models.DecimalField(max_digits=12, decimal_places=3)
+
+    class Meta:
+        ordering = ['-movement_at', '-id']
+
+    def __str__(self):
+        return f"{self.inventory_item.item_name} - {self.get_movement_type_display()}"
 
 
 
