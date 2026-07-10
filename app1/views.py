@@ -1379,6 +1379,25 @@ def shift_table(request, order_no, new_table_no):
     messages.error(request, "Invalid request method.")
     return redirect('addmore_items')
 
+def waiter_table_status(request):
+    user_obj, user_type = get_logged_in_user(request)
+    if not user_obj:
+        return JsonResponse({'error': 'User not authenticated'}, status=401)
+
+    tables = Table_list.objects.all()
+    occupied_tables = tables.filter(status="Occupied").exclude(occupied_order_no__isnull=True)
+    occupied_order_nos = [table.occupied_order_no for table in occupied_tables]
+    relevant_orders = Orders.objects.filter(order_no__in=occupied_order_nos)
+    order_items = OrderItems.objects.filter(order_no__in=occupied_order_nos)
+    kot_entries = KOT.objects.filter(order_no__in=occupied_order_nos)
+
+    html = render(request, 'Waiter/waiter_table_cards.html', {
+        'tables': tables,
+        'relevant_orders': relevant_orders,
+        'order_items': order_items,
+        'kot_entries': kot_entries,
+    }).content.decode('utf-8')
+    return JsonResponse({'html': html})
 
 def waiter_place_order(request):
     user_obj, user_type = get_logged_in_user(request)
@@ -1606,6 +1625,7 @@ def waiter_ready_kots(request):
             order_no__in=active_order_nos,
         )
         kot_entry.status = 'Served'
+        kot_entry.served_by = user_obj.username
         kot_entry.save()
 
         Orders.objects.filter(order_no=kot_entry.order_no).update(status='Served')
@@ -1622,14 +1642,55 @@ def waiter_ready_kots(request):
         order_type='Dine-In',
         order_no__in=active_order_nos,
     ).order_by('-created_at', '-id')
+    # served_kots_user: only KOTs served by the currently logged in waiter
+    served_kots_user = served_kots.filter(served_by=data.username)
     kot_nos = list(pending_kots.values_list('kot_no', flat=True)) + list(served_kots.values_list('kot_no', flat=True))
     kot_items = KOTItems.objects.filter(kot_no__in=kot_nos)
+    kot_items_map = {}
+    for item in kot_items:
+        kot_items_map.setdefault(item.kot_no, []).append(item)
+
+    # Group served KOTs by table number so one card per table
+    table_map = {}
+    for kot in served_kots:
+        table_no = kot.table_no or 'Unknown'
+        entry = table_map.setdefault(table_no, {
+            'table_no': table_no,
+            'kot_nos': set(),
+            'items_map': {},
+            'served_by': set(),
+        })
+        entry['kot_nos'].add(kot.kot_no)
+        if kot.served_by:
+            entry['served_by'].add(kot.served_by)
+
+        for item in kot_items_map.get(kot.kot_no, []):
+            key = (item.order_item, item.size)
+            if key not in entry['items_map']:
+                entry['items_map'][key] = {
+                    'order_item': item.order_item,
+                    'size': item.size,
+                    'quantity': 0,
+                }
+            entry['items_map'][key]['quantity'] += int(item.quantity)
+
+    served_orders = []
+    for tbl, entry in table_map.items():
+        items = list(entry['items_map'].values())
+        served_orders.append({
+            'table_no': entry['table_no'],
+            'kot_nos': list(entry['kot_nos']),
+            'items': items,
+            'served_by': ', '.join(sorted(entry['served_by'])) if entry['served_by'] else 'N/A',
+        })
 
     return render(request, 'Waiter/ready_kots.html', {
         'data': data,
         'pending_kots': pending_kots,
         'served_kots': served_kots,
+        'served_kots_user': served_kots_user,
         'kot_items': kot_items,
+        'served_orders': served_orders,
     })
 
 

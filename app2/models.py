@@ -170,6 +170,7 @@ class KOT(models.Model):
     table_no = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Preparing', 'Preparing'), ('Ready', 'Ready'), ('Served', 'Served'),('Cancelled', 'Cancelled')], default='Pending')
     created_at = models.DateTimeField()
+    served_by = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return f"KOT for {self.order_no} - {self.status}"

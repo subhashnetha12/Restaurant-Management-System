@@ -164,38 +164,30 @@
         <h4 class="dashboard-header">🍽️ Table Overview</h4> <br>
 
         <div class="container mt-4">
-            <div class="row justify-content-center">
-                {% for table in tables %}
-                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4 d-flex justify-content-center">
-                        {% if table.status == 'Occupied' %}
-                            <a href="{% url 'w_addmore_items' table.occupied_order_no %}">
-                        {% else %}
-                            <a href="{% url 'waiter_place_order' %}?table_no={{ table.table_no }}">
-                        {% endif %}
-                            <div class="card table-card {% if table.status == 'Occupied' %}occupied{% else %}available{% endif %}">
-                                <img src="{{ table.image.url }}" class="table-image" alt="Table {{ table.table_no }}">
-                                <div class="card-body text-center">
-                                    <h5 style="font-weight: 600;">{{ table.table_no }}</h5>
-                                    <p><span class="status-badge">{{ table.status }}</span></p>
-                                    {% if table.status == 'Occupied' %}
-                                        {% for order in relevant_orders %}
-                                            {% if table.occupied_order_no == order.order_no %}
-                                                <p style="margin-top: -20px; color: rgb(0, 174, 180);">
-                                                    <strong>Amount: {{ order.total_amount }}</strong>
-                                                </p>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                {% endfor %}
+            <div class="row justify-content-center" id="table-cards-container">
+                {% include 'Waiter/waiter_table_cards.html' %}
             </div>
         </div>        
     </div>  
     
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script>
+        function refreshWaiterTableStatus() {
+            $.get("{% url 'waiter_table_status' %}")
+                .done(function(data) {
+                    if (data.html) {
+                        $('#table-cards-container').html(data.html);
+                    }
+                })
+                .fail(function() {
+                    console.warn('Unable to refresh waiter table status.');
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            setInterval(refreshWaiterTableStatus, 5000);
+        });
+    </script>
 
     {% if messages %}
         {% for message in messages %}
