@@ -47,6 +47,7 @@ urlpatterns = [
 
     path('shift_table/<str:order_no>/<str:new_table_no>/', shift_table, name='shift_table'),
 
+    path('waiter_table_status/', waiter_table_status, name='waiter_table_status'),
     path('waiter_place_order', waiter_place_order, name='waiter_place_order'),
 
     path('w_addmore_items/<str:order_no>', w_addmore_items, name='w_addmore_items'),

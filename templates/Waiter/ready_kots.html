@@ -29,7 +29,7 @@
             border: 1px solid #eceef3;
             border-radius: 8px;
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             margin-bottom: 18px;
             padding: 8px;
@@ -113,6 +113,15 @@
             font-weight: 700;
             margin-bottom: 14px;
             padding: 12px;
+        }
+        .served-by {
+            background: #fff4e8;
+            border-radius: 8px;
+            color: #b45500;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding: 10px 12px;
         }
         .items-title {
             color: #202020;
@@ -217,7 +226,12 @@
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="served-tab" data-bs-toggle="pill" data-bs-target="#served-kots" type="button" role="tab" aria-controls="served-kots" aria-selected="false">
-                        Served <span class="count-pill">{{ served_kots|length }}</span>
+                        Served <span class="count-pill">{{ served_kots_user|length }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="orders-tab" data-bs-toggle="pill" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="false">
+                        Orders <span class="count-pill">{{ served_orders|length }}</span>
                     </button>
                 </li>
             </ul>
@@ -263,9 +277,9 @@
                 </section>
 
                 <section class="tab-pane fade" id="served-kots" role="tabpanel" aria-labelledby="served-tab" tabindex="0">
-                    {% if served_kots %}
+                    {% if served_kots_user %}
                         <div class="kot-grid">
-                            {% for kot in served_kots %}
+                            {% for kot in served_kots_user %}
                                 <article class="kot-card">
                                     <div class="kot-card-header">
                                         <p class="kot-title">KOT No: {{ kot.kot_no }}</p>
@@ -295,9 +309,51 @@
                         <div class="empty-state">No served KOTs for active tables.</div>
                     {% endif %}
                 </section>
+
+                <section class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab" tabindex="0">
+                    {% if served_orders %}
+                        <div class="kot-grid">
+                            {% for order in served_orders %}
+                                <article class="kot-card">
+                                    <div class="kot-card-header">
+                                        <p class="kot-title">TABLE {{ order.table_no }}</p>
+                                        <span class="status-badge status-served">Served</span>
+                                    </div>
+                                    <div class="order-info">
+                                        KOT Nos: {{ order.kot_nos|join:", " }}
+                                    </div>
+                                    <div class="served-by">
+                                        Served by: {{ order.served_by }}
+                                    </div>
+                                    <div class="items-title">Items</div>
+                                    <ul class="kot-items">
+                                        {% for item in order.items %}
+                                            <li>
+                                                <span class="item-name">{{ item.order_item }}</span>
+                                                <span class="item-qty">({{ item.size }}) - x{{ item.quantity }}</span>
+                                            </li>
+                                        {% empty %}
+                                            <li>No items available for this table.</li>
+                                        {% endfor %}
+                                    </ul>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">No served orders for active tables.</div>
+                    {% endif %}
+                </section>
             </div>
         </main>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            setInterval(function () {
+                window.location.reload();
+            }, 60000);
+        });
+    </script>
 
     {% if messages %}
         {% for message in messages %}
