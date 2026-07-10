@@ -1,10 +1,12 @@
-<div class="d-flex flex-wrap gap-2 mb-4">
-  <a class="btn btn-outline-primary" href="{% url 'inventory_dashboard' %}">Dashboard</a>
-  <a class="btn btn-outline-primary" href="{% url 'inventory_list' %}">Stock</a>
+{% with current=request.resolver_match.url_name %}
+<div class="inventory-section-nav d-flex flex-wrap gap-2 mb-4" aria-label="Inventory sections">
+  <a class="btn {% if current == 'inventory_dashboard' %}btn-primary active{% else %}btn-outline-primary{% endif %}" href="{% url 'inventory_dashboard' %}" {% if current == 'inventory_dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
+  <a class="btn {% if current == 'inventory_list' or current == 'inventory_add' or current == 'inventory_edit' or current == 'inventory_delete' %}btn-primary active{% else %}btn-outline-primary{% endif %}" href="{% url 'inventory_list' %}" {% if current == 'inventory_list' or current == 'inventory_add' or current == 'inventory_edit' or current == 'inventory_delete' %}aria-current="page"{% endif %}>Stock</a>
   {% if user_type == 'admin' or data.role|lower == 'inventory' %}
-  <a class="btn btn-outline-primary" href="{% url 'vendor_list' %}">Vendors</a>
-  <a class="btn btn-outline-primary" href="{% url 'purchase_order_list' %}">Purchases</a>
-  <a class="btn btn-outline-primary" href="{% url 'movement_list' %}">Movements</a>
-  <a class="btn btn-outline-primary" href="{% url 'daily_inventory_report' %}">Daily report</a>
+  <a class="btn {% if current == 'vendor_list' or current == 'vendor_add' or current == 'vendor_edit' or current == 'vendor_delete' %}btn-primary active{% else %}btn-outline-primary{% endif %}" href="{% url 'vendor_list' %}" {% if current == 'vendor_list' or current == 'vendor_add' or current == 'vendor_edit' or current == 'vendor_delete' %}aria-current="page"{% endif %}>Vendors</a>
+  <a class="btn {% if current == 'purchase_order_list' or current == 'purchase_order_add' or current == 'purchase_order_detail' or current == 'purchase_order_edit' or current == 'purchase_order_item_edit' or current == 'purchase_order_receive' %}btn-primary active{% else %}btn-outline-primary{% endif %}" href="{% url 'purchase_order_list' %}" {% if current == 'purchase_order_list' or current == 'purchase_order_add' or current == 'purchase_order_detail' or current == 'purchase_order_edit' or current == 'purchase_order_item_edit' or current == 'purchase_order_receive' %}aria-current="page"{% endif %}>Purchases</a>
+  <a class="btn {% if current == 'movement_list' or current == 'movement_add' or current == 'movement_add_for_item' %}btn-primary active{% else %}btn-outline-primary{% endif %}" href="{% url 'movement_list' %}" {% if current == 'movement_list' or current == 'movement_add' or current == 'movement_add_for_item' %}aria-current="page"{% endif %}>Movements</a>
+  <a class="btn {% if current == 'daily_inventory_report' %}btn-primary active{% else %}btn-outline-primary{% endif %}" href="{% url 'daily_inventory_report' %}" {% if current == 'daily_inventory_report' %}aria-current="page"{% endif %}>Daily report</a>
   {% endif %}
 </div>
+{% endwith %}
