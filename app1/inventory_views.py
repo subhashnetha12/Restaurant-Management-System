@@ -3,14 +3,16 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import DecimalField, F, Q, Sum, Value
 from django.db.models.functions import Coalesce
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from app2.inventory_forms import InventoryForm, MovementForm, PurchaseOrderForm, PurchaseOrderItemForm, VendorForm
+from app2.inventory_forms import InventoryForm, MovementForm, PurchaseOrderForm, PurchaseOrderItemForm, PurchaseOrderItemFormSet, PurchasePaymentForm, VendorForm
 from app2.inventory_services import adjust_stock, receive_purchase_order, record_movement
-from app2.models import Inventory, Orders, Payments, PurchaseOrder, PurchaseOrderItem, StockMovement, Vendor
+from app2.models import Inventory, Orders, Payments, PurchaseOrder, PurchaseOrderItem, PurchasePayment, StockMovement, Vendor
 from .views import get_logged_in_user
 
 
@@ -41,9 +43,13 @@ def inventory_dashboard(request):
     if response: return response
     user, kind = auth
     stock = Inventory.objects.all()
+    active_orders = PurchaseOrder.objects.exclude(status='cancelled').prefetch_related('items', 'payments')
+    payables = sum((po.payable_amount for po in active_orders), Decimal('0'))
+    advances = sum((po.advance_amount for po in active_orders), Decimal('0'))
     return render(request, 'Inventory/dashboard.html', _context(user, kind,
         item_count=stock.count(), low_stock_count=stock.filter(quantity__lte=F('min_quantity')).count(),
         active_vendor_count=Vendor.objects.filter(is_active=True).count(), open_po_count=PurchaseOrder.objects.exclude(status__in=['received', 'cancelled']).count(),
+        payables=payables, advances=advances,
         recent_movements=StockMovement.objects.select_related('inventory_item')[:8]))
 
 
@@ -78,6 +84,32 @@ def inventory_edit(request, pk=None):
     return render(request, 'Inventory/form.html', _context(user, kind, form=form, title='Edit stock item' if pk else 'Add stock item', back_url='inventory_list'))
 
 
+def inventory_quick_create(request):
+    auth, response = _guard(request)
+    if response:
+        return JsonResponse({'ok': False, 'error': 'You do not have permission to create stock items.'}, status=403)
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'POST is required.'}, status=405)
+    user, kind = auth
+    form = InventoryForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({'ok': False, 'errors': form.errors.get_json_data()}, status=400)
+    desired_quantity = form.cleaned_data['quantity']
+    item = form.save(commit=False)
+    item.quantity = 0
+    item.save()
+    if desired_quantity:
+        record_movement(
+            item=item, movement_type=StockMovement.OPENING_STOCK, quantity=desired_quantity,
+            created_by=user.username, reference_type='inventory_quick_creation',
+            notes='Created while entering a purchase order',
+        )
+    return JsonResponse({
+        'ok': True, 'item': {'id': item.pk, 'name': item.item_name, 'unit': item.unit,
+                            'unit_label': item.get_unit_display(), 'quantity': str(item.quantity)},
+    }, status=201)
+
+
 def inventory_delete(request, pk):
     auth, response = _guard(request)
     if response: return response
@@ -96,7 +128,36 @@ def vendor_list(request):
     auth, response = _guard(request)
     if response: return response
     user, kind = auth
-    return render(request, 'Inventory/vendor_list.html', _context(user, kind, vendors=Vendor.objects.all()))
+    vendors = list(Vendor.objects.prefetch_related('purchase_orders__items', 'purchase_orders__payments'))
+    for vendor in vendors:
+        orders = [po for po in vendor.purchase_orders.all() if po.status != 'cancelled']
+        vendor.total_purchases = sum((po.total_amount for po in orders), Decimal('0'))
+        vendor.total_paid = sum((po.total_paid for po in orders), Decimal('0'))
+        vendor.balance = vendor.total_purchases - vendor.total_paid
+        vendor.advance = max(-vendor.balance, Decimal('0'))
+    return render(request, 'Inventory/vendor_list.html', _context(user, kind, vendors=vendors))
+
+
+def vendor_ledger(request, pk):
+    auth, response = _guard(request)
+    if response: return response
+    user, kind = auth
+    vendor = get_object_or_404(Vendor, pk=pk)
+    orders = vendor.purchase_orders.exclude(status='cancelled').prefetch_related('items', 'payments')
+    events = []
+    for po in orders:
+        events.append({'date': po.purchase_date, 'sort': 0, 'type': 'Purchase', 'reference': po.number, 'debit': po.total_amount, 'credit': Decimal('0'), 'po': po})
+        for payment in po.payments.all():
+            events.append({'date': payment.payment_date, 'sort': 1, 'type': 'Payment', 'reference': payment.reference_number or po.number, 'debit': Decimal('0'), 'credit': payment.amount, 'po': po, 'payment': payment})
+    events.sort(key=lambda event: (event['date'], event['sort'], event.get('payment').id if event.get('payment') else event['po'].id))
+    running = Decimal('0')
+    for event in events:
+        running += event['debit'] - event['credit']
+        event['balance'] = running
+    return render(request, 'Inventory/vendor_ledger.html', _context(
+        user, kind, vendor=vendor, entries=events, total_purchases=sum((po.total_amount for po in orders), Decimal('0')),
+        total_paid=sum((po.total_paid for po in orders), Decimal('0')), balance=running,
+    ))
 
 
 def vendor_edit(request, pk=None):
@@ -132,12 +193,31 @@ def purchase_order_list(request):
 def purchase_order_edit(request, pk=None):
     auth, response = _guard(request)
     if response: return response
-    user, kind = auth; po = get_object_or_404(PurchaseOrder, pk=pk) if pk else None
-    form = PurchaseOrderForm(request.POST or None, instance=po, initial={'number': f"PO-{timezone.now():%Y%m%d-%H%M%S}"} if not po else None)
-    if request.method == 'POST' and form.is_valid():
-        po = form.save(commit=False); po.created_by = po.created_by or user.username; po.save()
-        messages.success(request, 'Purchase order saved. Add its stock items below.'); return redirect('purchase_order_detail', pk=po.pk)
-    return render(request, 'Inventory/form.html', _context(user, kind, form=form, title='Edit purchase order' if pk else 'Create purchase order', back_url='purchase_order_list'))
+    user, kind = auth
+    po = get_object_or_404(PurchaseOrder, pk=pk) if pk else PurchaseOrder()
+    initial = {'number': f"PO-{timezone.now():%Y%m%d-%H%M%S}"} if not pk else None
+    form = PurchaseOrderForm(request.POST or None, instance=po, initial=initial)
+    formset = PurchaseOrderItemFormSet(request.POST or None, instance=po, prefix='items')
+    forms_valid = form.is_valid() and formset.is_valid() if request.method == 'POST' else False
+    has_line = forms_valid and any(
+        line.cleaned_data.get('inventory_item') and not line.cleaned_data.get('DELETE')
+        for line in formset.forms
+    )
+    if request.method == 'POST' and forms_valid and not has_line:
+        messages.error(request, 'Add at least one stock item to the purchase order.')
+    if request.method == 'POST' and forms_valid and has_line:
+        with transaction.atomic():
+            po = form.save(commit=False)
+            po.created_by = po.created_by or user.username
+            po.save()
+            formset.instance = po
+            formset.save()
+        messages.success(request, 'Purchase order and stock items saved. Enter received quantities, then post the receipt to increase stock.')
+        return redirect('purchase_order_detail', pk=po.pk)
+    return render(request, 'Inventory/po_form.html', _context(
+        user, kind, form=form, formset=formset, title='Edit purchase order' if pk else 'Create purchase order',
+        has_vendors=Vendor.objects.filter(is_active=True).exists(), inventory_items=Inventory.objects.all(),
+    ))
 
 
 def purchase_order_detail(request, pk):
@@ -152,7 +232,23 @@ def purchase_order_detail(request, pk):
             form.add_error('inventory_item', 'This stock item is already on the purchase order.')
         else:
             messages.success(request, 'Purchase item added.'); return redirect('purchase_order_detail', pk=pk)
-    return render(request, 'Inventory/po_detail.html', _context(user, kind, purchase_order=po, form=form))
+    return render(request, 'Inventory/po_detail.html', _context(user, kind, purchase_order=po, form=form, payments=po.payments.all()))
+
+
+def purchase_payment_add(request, pk):
+    auth, response = _guard(request)
+    if response: return response
+    user, kind = auth
+    po = get_object_or_404(PurchaseOrder.objects.prefetch_related('items', 'payments'), pk=pk)
+    form = PurchasePaymentForm(request.POST or None, initial={'payment_date': timezone.localdate(), 'amount': po.payable_amount})
+    if request.method == 'POST' and form.is_valid():
+        payment = form.save(commit=False)
+        payment.purchase_order = po
+        payment.created_by = user.username
+        payment.save()
+        messages.success(request, f'Payment of ₹{payment.amount:.2f} recorded for {po.number}.')
+        return redirect('purchase_order_detail', pk=po.pk)
+    return render(request, 'Inventory/payment_form.html', _context(user, kind, purchase_order=po, form=form))
 
 
 def purchase_order_item_edit(request, pk):
@@ -217,7 +313,7 @@ def daily_inventory_report(request):
         closing = day_moves.order_by('-movement_at', '-id').values_list('balance_after', flat=True).first()
         if closing is None: closing = item.quantity
         if day_moves.exists(): rows.append({'item': item, 'opening': closing - net, 'purchased': purchased, 'issued': issued, 'wastage': wastage, 'closing': closing})
-    purchase_paid = PurchaseOrder.objects.filter(payment_date=selected).aggregate(v=Coalesce(Sum('amount_paid'), Decimal('0')))['v']
+    purchase_paid = PurchasePayment.objects.filter(payment_date=selected).aggregate(v=Coalesce(Sum('amount'), Decimal('0')))['v']
     sale_value = Payments.objects.filter(payment_status='Completed', order_no__in=Orders.objects.filter(order_date__date=selected).values('order_no')).aggregate(v=Coalesce(Sum('total_amount'), Decimal('0')))['v']
     totals = {'purchase_paid': purchase_paid, 'sale_value': sale_value, 'difference': sale_value - purchase_paid,
               'issued': sum((r['issued'] for r in rows), Decimal('0')), 'wastage': sum((r['wastage'] for r in rows), Decimal('0'))}

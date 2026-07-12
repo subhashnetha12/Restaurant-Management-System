@@ -1,0 +1,115 @@
+{% extends base_template %}{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'Rest-Admin/css/vendor/select2/select2.min.css' %}"><style>.purchase-page{max-width:1500px}.purchase-card{border:0;border-radius:14px;box-shadow:0 6px 24px rgba(34,51,84,.08)}.section-kicker{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#6c757d;font-weight:700}.purchase-item-picker{display:flex;align-items:center;gap:.4rem}.purchase-item-picker .select2-container{flex:1;min-width:180px}.purchase-item-picker .select2-selection--single{height:42px!important;border:1px solid #ced4da!important;border-radius:.5rem!important}.purchase-item-picker .select2-selection__rendered{line-height:40px!important;padding-left:.75rem!important}.purchase-item-picker .select2-selection__arrow{height:40px!important}.quick-add-stock{width:42px;height:42px;flex:0 0 42px;font-size:1.35rem;line-height:1;padding:0;border-radius:.5rem}.purchase-lines td{vertical-align:middle!important;padding-top:.75rem;padding-bottom:.75rem}.purchase-lines input,.purchase-lines select{margin:0}.purchase-lines thead th{white-space:nowrap;color:#5b6270;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;border-bottom-width:1px}.add-line-btn{border-style:dashed;border-width:1.5px}.line-number{display:inline-flex;width:26px;height:26px;border-radius:50%;background:#eef4ff;color:#0d6efd;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}.remove-line{width:36px;height:36px;padding:0}.purchase-actions{position:sticky;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-top:1px solid #e9ecef;margin:0 -1.5rem -1.5rem;padding:1rem 1.5rem;border-radius:0 0 14px 14px}</style>{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 purchase-page">
+  <div class="d-flex justify-content-between align-items-center"><h2>{{ title }}</h2><a class="btn btn-light" href="{% url 'purchase_order_list' %}">Back to purchases</a></div>
+  {% include 'Inventory/_nav.html' %}
+  {% if not has_vendors %}<div class="alert alert-warning"><strong>Add a vendor first.</strong> Every purchase must identify its supplier. <a href="{% url 'vendor_add' %}">Create vendor</a></div>{% endif %}
+  {% if not inventory_items %}<div class="alert alert-warning"><strong>Add stock items first.</strong> Purchase lines are linked to the stock master. <a href="{% url 'inventory_add' %}">Create stock item</a></div>{% endif %}
+  <form method="post" novalidate>{% csrf_token %}
+    <div class="card purchase-card p-4 mb-4">
+      <div class="section-kicker mb-1">Purchase information</div><h5 class="mb-3">Order details</h5>
+      <div class="row g-3 align-items-start">
+      {% for field in form %}{% if field.name != 'notes' %}<div class="col-12 col-md-6 col-xl-3"><label class="form-label fw-semibold">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}
+      </div>{% for error in form.non_field_errors %}<div class="alert alert-danger mt-3">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="card purchase-card p-4 mb-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3"><div><div class="section-kicker mb-1">Purchase lines</div><h5 class="mb-1">Items being purchased</h5><p class="text-muted mb-0">Add every item on this supplier bill. Received quantity is what physically arrived.</p></div><button type="button" class="btn btn-outline-primary add-line-btn" id="addPurchaseLine"><i class="fa fa-plus me-1"></i> Add another item</button></div>
+      {{ formset.management_form }}
+      {% for error in formset.non_form_errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
+      <div class="table-responsive"><table class="table align-middle purchase-lines"><thead><tr><th>#</th><th style="min-width:280px">Stock item</th><th>Ordered</th><th>Received</th><th>Unit</th><th>Unit cost (₹)</th><th class="text-center">Remove</th></tr></thead><tbody id="purchaseLineBody">
+      {% for line_form in formset %}<tr class="purchase-line-row">{% for hidden in line_form.hidden_fields %}{{ hidden }}{% endfor %}<td><span class="line-number">{{ forloop.counter }}</span></td><td><div class="purchase-item-picker">{{ line_form.inventory_item }}<button type="button" class="btn btn-outline-primary quick-add-stock" data-target="{{ line_form.inventory_item.id_for_label }}" title="Create new stock item" aria-label="Create new stock item">+</button></div>{% for e in line_form.inventory_item.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td><td>{{ line_form.quantity_ordered }}{% for e in line_form.quantity_ordered.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td><td>{{ line_form.quantity_received }}{% for e in line_form.quantity_received.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td><td>{{ line_form.unit }}</td><td>{{ line_form.unit_cost }}</td><td class="text-center">{% if line_form.instance.pk %}<span class="d-none">{{ line_form.DELETE }}</span>{% endif %}<button type="button" class="btn btn-sm btn-outline-danger remove-line" title="Remove this item" aria-label="Remove this item"><i class="fa fa-trash"></i></button></td></tr>{% for e in line_form.non_field_errors %}<tr><td colspan="7" class="text-danger">{{ e }}</td></tr>{% endfor %}{% endfor %}
+      </tbody></table></div>
+      <template id="emptyPurchaseLine"><tr class="purchase-line-row">{% with line_form=formset.empty_form %}{% for hidden in line_form.hidden_fields %}{{ hidden }}{% endfor %}<td><span class="line-number"></span></td><td><div class="purchase-item-picker">{{ line_form.inventory_item }}<button type="button" class="btn btn-outline-primary quick-add-stock" data-target="{{ line_form.inventory_item.id_for_label }}" title="Create new stock item" aria-label="Create new stock item">+</button></div></td><td>{{ line_form.quantity_ordered }}</td><td>{{ line_form.quantity_received }}</td><td>{{ line_form.unit }}</td><td>{{ line_form.unit_cost }}</td><td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-line" title="Remove this item" aria-label="Remove this item"><i class="fa fa-trash"></i></button></td>{% endwith %}</tr></template>
+      <div class="row mt-4"><div class="col-12"><label class="form-label fw-semibold">Notes</label>{{ form.notes }}{% if form.notes.help_text %}<div class="form-text">{{ form.notes.help_text }}</div>{% endif %}{% for error in form.notes.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div></div>
+      <div class="purchase-actions d-flex justify-content-end gap-2 mt-4"><a class="btn btn-light" href="{% url 'purchase_order_list' %}">Cancel</a><button class="btn btn-primary px-4" {% if not has_vendors or not inventory_items %}disabled{% endif %}><i class="fa fa-check me-1"></i> Save purchase order</button></div>
+    </div>
+  </form>
+</div>
+<div class="modal fade" id="quickStockModal" tabindex="-1" aria-labelledby="quickStockTitle" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><div><h5 class="modal-title" id="quickStockTitle">Create stock item</h5><small class="text-muted">It will be selected in your purchase automatically.</small></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><form id="quickStockForm"><div class="modal-body"><div id="quickStockErrors" class="alert alert-danger d-none"></div><div class="mb-3"><label class="form-label">Item name</label><input class="form-control" name="item_name" required maxlength="255" placeholder="e.g. Idly Ravva"></div><div class="row"><div class="col-6 mb-3"><label class="form-label">Opening quantity</label><input class="form-control" name="quantity" type="number" min="0" step="0.001" value="0" required><div class="form-text">Usually 0 when adding it for this purchase.</div></div><div class="col-6 mb-3"><label class="form-label">Minimum quantity</label><input class="form-control" name="min_quantity" type="number" min="0" step="0.001" value="0" required></div></div><div class="mb-3"><label class="form-label">Unit</label><select class="form-select" name="unit" required><option value="kg">Kilograms (kg)</option><option value="g">Grams (g)</option><option value="liter">Litres (L)</option><option value="ml">Millilitres (ml)</option><option value="piece">Pieces</option><option value="packet">Packets</option><option value="box">Boxes</option><option value="bottle">Bottles</option><option value="can">Cans</option><option value="dozen">Dozen</option></select></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary" id="quickStockSave">Create and select</button></div></form></div></div></div>
+<style>.card input,.card select,.card textarea{display:block;width:100%;padding:.5rem;border:1px solid #ced4da;border-radius:.375rem}.card input[type=checkbox]{width:auto}.errorlist{color:#dc3545}</style>
+{% endblock %}
+{% block scripts %}<script src="{% static 'Rest-Admin/js/vendor/select2/select2.full.min.js' %}"></script><script>
+document.addEventListener('DOMContentLoaded', function () {
+  let targetSelectId = null;
+  const modalElement = document.getElementById('quickStockModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+  const quickForm = document.getElementById('quickStockForm');
+  const errorBox = document.getElementById('quickStockErrors');
+  const lineBody = document.getElementById('purchaseLineBody');
+  const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+  function initializePicker(select) {
+    if (!$(select).hasClass('select2-hidden-accessible')) $(select).select2({placeholder: 'Search stock item', allowClear: true, width: '100%'});
+  }
+  function renumberLines() {
+    lineBody.querySelectorAll('.purchase-line-row:not(.d-none)').forEach(function (row, index) { row.querySelector('.line-number').textContent = index + 1; });
+  }
+  document.querySelectorAll('select[name$="-inventory_item"]').forEach(initializePicker);
+  document.getElementById('addPurchaseLine').addEventListener('click', function () {
+    const index = parseInt(totalForms.value, 10);
+    const html = document.getElementById('emptyPurchaseLine').innerHTML.replaceAll('__prefix__', index);
+    lineBody.insertAdjacentHTML('beforeend', html);
+    totalForms.value = index + 1;
+    const row = lineBody.lastElementChild;
+    initializePicker(row.querySelector('select[name$="-inventory_item"]'));
+    renumberLines();
+    row.querySelector('.select2-selection').focus();
+  });
+  lineBody.addEventListener('click', function (event) {
+    const removeButton = event.target.closest('.remove-line');
+    if (removeButton) {
+      const row = removeButton.closest('.purchase-line-row');
+      const deleteInput = row.querySelector('input[name$="-DELETE"]');
+      if (deleteInput) { deleteInput.checked = true; row.classList.add('d-none'); }
+      else {
+        const picker = row.querySelector('select[name$="-inventory_item"]');
+        $(picker).val(null).trigger('change');
+        row.querySelectorAll('input,select').forEach(function (field) { if (!field.name.endsWith('-quantity_received')) field.value = ''; });
+        const received = row.querySelector('input[name$="-quantity_received"]'); if (received) received.value = '0';
+        row.classList.add('d-none');
+      }
+      renumberLines();
+      return;
+    }
+    const button = event.target.closest('.quick-add-stock');
+    if (button) {
+      targetSelectId = button.dataset.target;
+      quickForm.reset();
+      quickForm.elements.quantity.value = '0'; quickForm.elements.min_quantity.value = '0';
+      errorBox.classList.add('d-none'); errorBox.innerHTML = '';
+      modal.show();
+      modalElement.addEventListener('shown.bs.modal', function () { quickForm.elements.item_name.focus(); }, {once: true});
+    }
+  });
+  quickForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const saveButton = document.getElementById('quickStockSave');
+    saveButton.disabled = true; saveButton.textContent = 'Creating…';
+    errorBox.classList.add('d-none');
+    try {
+      const response = await fetch('{% url "inventory_quick_create" %}', {
+        method: 'POST', body: new FormData(quickForm),
+        headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 'X-Requested-With': 'XMLHttpRequest'}
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        const messages = data.errors ? Object.values(data.errors).flat().map(e => e.message) : [data.error || 'Unable to create item.'];
+        throw new Error(messages.join('<br>'));
+      }
+      document.querySelectorAll('select[name$="-inventory_item"]').forEach(function (select) {
+        if (!Array.from(select.options).some(option => option.value === String(data.item.id))) select.add(new Option(data.item.name, data.item.id));
+      });
+      const target = document.getElementById(targetSelectId);
+      target.value = String(data.item.id); $(target).trigger('change');
+      const row = target.closest('tr');
+      const unitSelect = row.querySelector('select[name$="-unit"]');
+      if (unitSelect) unitSelect.value = data.item.unit;
+      modal.hide();
+    } catch (error) {
+      errorBox.innerHTML = error.message; errorBox.classList.remove('d-none');
+    } finally { saveButton.disabled = false; saveButton.textContent = 'Create and select'; }
+  });
+});
+</script>
+{% endblock %}

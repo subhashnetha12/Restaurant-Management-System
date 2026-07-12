@@ -1,7 +1,13 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.forms import inlineformset_factory
 
-from .models import Inventory, PurchaseOrder, PurchaseOrderItem, StockMovement, Vendor
+from .models import Inventory, PurchaseOrder, PurchaseOrderItem, PurchasePayment, StockMovement, Vendor
+
+
+class InventoryItemChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.item_name
 
 
 class DateInput(forms.DateInput):
@@ -28,26 +34,26 @@ class VendorForm(forms.ModelForm):
 class PurchaseOrderForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrder
-        fields = ['number', 'vendor', 'purchase_date', 'status', 'amount_paid', 'payment_method', 'payment_date', 'notes']
-        widgets = {'purchase_date': DateInput(), 'payment_date': DateInput()}
+        fields = ['number', 'vendor', 'purchase_date', 'status', 'notes']
+        widgets = {'purchase_date': DateInput()}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['vendor'].queryset = Vendor.objects.filter(is_active=True) | Vendor.objects.filter(pk=getattr(self.instance, 'vendor_id', None))
-
-    def clean(self):
-        cleaned = super().clean()
-        if cleaned.get('amount_paid') and not cleaned.get('payment_method'):
-            self.add_error('payment_method', 'Select a payment method when an amount is paid.')
-        if cleaned.get('amount_paid') and not cleaned.get('payment_date'):
-            self.add_error('payment_date', 'Enter a payment date when an amount is paid.')
-        return cleaned
-
+        self.fields['status'].choices = [choice for choice in PurchaseOrder.STATUS_CHOICES if choice[0] != 'received']
+        self.fields['number'].help_text = 'Automatically generated; you can replace it with the supplier invoice or PO number.'
 
 class PurchaseOrderItemForm(forms.ModelForm):
+    inventory_item = InventoryItemChoiceField(queryset=Inventory.objects.none(), label='Stock item')
+
     class Meta:
         model = PurchaseOrderItem
         fields = ['inventory_item', 'quantity_ordered', 'quantity_received', 'unit', 'unit_cost']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['inventory_item'].queryset = Inventory.objects.all()
+        self.fields['inventory_item'].help_text = 'Select the stock master item; enter only the quantity being purchased below.'
 
     def clean(self):
         cleaned = super().clean()
@@ -56,6 +62,22 @@ class PurchaseOrderItemForm(forms.ModelForm):
         if self.instance.pk and cleaned.get('quantity_received', 0) < self.instance.quantity_posted:
             raise ValidationError('Quantity received cannot be lower than stock already posted.')
         return cleaned
+
+
+PurchaseOrderItemFormSet = inlineformset_factory(
+    PurchaseOrder,
+    PurchaseOrderItem,
+    form=PurchaseOrderItemForm,
+    extra=3,
+    can_delete=True,
+)
+
+
+class PurchasePaymentForm(forms.ModelForm):
+    class Meta:
+        model = PurchasePayment
+        fields = ['payment_date', 'amount', 'payment_method', 'reference_number', 'notes']
+        widgets = {'payment_date': DateInput()}
 
 
 class MovementForm(forms.Form):

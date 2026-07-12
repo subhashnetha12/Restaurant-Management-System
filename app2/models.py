@@ -14,6 +14,12 @@ from django.core.files.base import ContentFile
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from django.utils import timezone
+
+INVENTORY_UNIT_CHOICES = [
+    ('kg', 'Kilograms (kg)'), ('g', 'Grams (g)'), ('liter', 'Litres (L)'),
+    ('ml', 'Millilitres (ml)'), ('piece', 'Pieces'), ('packet', 'Packets'),
+    ('box', 'Boxes'), ('bottle', 'Bottles'), ('can', 'Cans'), ('dozen', 'Dozen'),
+]
 import qrcode
 from io import BytesIO
 
@@ -235,7 +241,7 @@ class Inventory(models.Model):
     item_name = models.CharField(max_length=255, unique=True)
     quantity = models.DecimalField(max_digits=12, decimal_places=3, default=0, validators=[MinValueValidator(Decimal('0'))])
     min_quantity = models.DecimalField(max_digits=12, decimal_places=3, default=0, validators=[MinValueValidator(Decimal('0'))])
-    unit = models.CharField(max_length=50)
+    unit = models.CharField(max_length=50, choices=INVENTORY_UNIT_CHOICES)
     last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -292,7 +298,21 @@ class PurchaseOrder(models.Model):
 
     @property
     def balance_amount(self):
-        return self.total_amount - self.amount_paid
+        return self.total_amount - self.total_paid
+
+    @property
+    def total_paid(self):
+        if not self.pk:
+            return Decimal('0')
+        return self.payments.aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
+
+    @property
+    def payable_amount(self):
+        return max(self.balance_amount, Decimal('0'))
+
+    @property
+    def advance_amount(self):
+        return max(-self.balance_amount, Decimal('0'))
 
     def __str__(self):
         return self.number
@@ -304,7 +324,7 @@ class PurchaseOrderItem(models.Model):
     quantity_ordered = models.DecimalField(max_digits=12, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))])
     quantity_received = models.DecimalField(max_digits=12, decimal_places=3, default=0, validators=[MinValueValidator(Decimal('0'))])
     quantity_posted = models.DecimalField(max_digits=12, decimal_places=3, default=0, editable=False)
-    unit = models.CharField(max_length=50)
+    unit = models.CharField(max_length=50, choices=INVENTORY_UNIT_CHOICES)
     unit_cost = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0'))])
 
     class Meta:
@@ -316,6 +336,24 @@ class PurchaseOrderItem(models.Model):
 
     def __str__(self):
         return f"{self.purchase_order.number} - {self.inventory_item.item_name}"
+
+
+class PurchasePayment(models.Model):
+    METHOD_CHOICES = PurchaseOrder.PAYMENT_METHOD_CHOICES
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.PROTECT, related_name='payments')
+    payment_date = models.DateField(default=timezone.localdate, db_index=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    payment_method = models.CharField(max_length=20, choices=METHOD_CHOICES)
+    reference_number = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    created_by = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['payment_date', 'id']
+
+    def __str__(self):
+        return f"{self.purchase_order.number} - {self.amount}"
 
 
 class StockMovement(models.Model):
