@@ -8,11 +8,22 @@ from .models import Inventory, PurchaseOrder, PurchaseOrderItem, StockMovement
 
 
 @transaction.atomic
-def record_movement(*, item, movement_type, quantity, created_by='', notes='', reference_type='', reference_number='', purchase_cost_amount=0, sale_value=0, movement_at=None):
+def record_movement(*, item, movement_type, quantity, created_by='', notes='', reference_type='', reference_number='', purchase_cost_amount=0, sale_value=0, movement_at=None, vendor=None, purchase_order=None):
     quantity = Decimal(str(quantity))
     if quantity <= 0:
         raise ValidationError('Movement quantity must be greater than zero.')
     item = Inventory.objects.select_for_update().get(pk=item.pk)
+    if movement_type == StockMovement.RETURN_VENDOR:
+        if not vendor:
+            raise ValidationError('Select the vendor receiving this return.')
+        purchase_cost_amount = Decimal(str(purchase_cost_amount or 0))
+        if purchase_cost_amount <= 0:
+            raise ValidationError('Enter the return value so the vendor ledger can be credited.')
+        if purchase_order:
+            if purchase_order.vendor_id != vendor.pk:
+                raise ValidationError('The selected purchase order belongs to a different vendor.')
+            if not purchase_order.items.filter(inventory_item=item).exists():
+                raise ValidationError('This stock item is not part of the selected purchase order.')
     incoming = movement_type in (StockMovement.PURCHASE_RECEIVED, StockMovement.OPENING_STOCK)
     if movement_type == StockMovement.ADJUSTMENT:
         raise ValidationError('Use adjust_stock for stock adjustments.')
@@ -26,6 +37,7 @@ def record_movement(*, item, movement_type, quantity, created_by='', notes='', r
         quantity_in=quantity if incoming else 0, quantity_out=0 if incoming else quantity,
         unit=item.unit, reference_type=reference_type, reference_number=reference_number,
         purchase_cost_amount=purchase_cost_amount or 0, sale_value=sale_value or 0,
+        vendor=vendor, purchase_order=purchase_order,
         created_by=created_by, notes=notes, balance_after=new_balance,
     )
 

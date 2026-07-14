@@ -298,7 +298,17 @@ class PurchaseOrder(models.Model):
 
     @property
     def balance_amount(self):
-        return self.total_amount - self.total_paid
+        return self.total_amount - self.return_total - self.total_paid
+
+    @property
+    def return_total(self):
+        if not self.pk:
+            return Decimal('0')
+        return self.vendor_returns.aggregate(total=models.Sum('purchase_cost_amount'))['total'] or Decimal('0')
+
+    @property
+    def net_purchase_amount(self):
+        return self.total_amount - self.return_total
 
     @property
     def total_paid(self):
@@ -369,6 +379,8 @@ class StockMovement(models.Model):
         (ADJUSTMENT, 'Stock Adjustment'), (OPENING_STOCK, 'Opening Stock'),
     ]
     inventory_item = models.ForeignKey(Inventory, on_delete=models.PROTECT, related_name='movements')
+    vendor = models.ForeignKey(Vendor, on_delete=models.PROTECT, related_name='stock_returns', null=True, blank=True)
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.PROTECT, related_name='vendor_returns', null=True, blank=True)
     movement_at = models.DateTimeField(default=timezone.now, db_index=True)
     movement_type = models.CharField(max_length=30, choices=MOVEMENT_CHOICES)
     quantity_in = models.DecimalField(max_digits=12, decimal_places=3, default=0)

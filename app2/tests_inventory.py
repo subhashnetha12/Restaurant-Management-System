@@ -166,3 +166,52 @@ class InventoryViewTests(TestCase):
         self.assertContains(response, 'Create and select')
         self.assertContains(response, 'Add another item')
         self.assertContains(response, 'emptyPurchaseLine')
+
+class VendorReturnAccountingTests(TestCase):
+    def setUp(self):
+        self.admin = Admin.objects.create(username='returns-admin', password='secret', phone_number=444, email='returns@example.com')
+        self.vendor = Vendor.objects.create(name='Return Supplier')
+        self.item = Inventory.objects.create(item_name='Return Rice', quantity=10, min_quantity=2, unit='kg')
+        self.po = PurchaseOrder.objects.create(number='PO-RETURN-1', vendor=self.vendor, status='received')
+        PurchaseOrderItem.objects.create(purchase_order=self.po, inventory_item=self.item, quantity_ordered=10, quantity_received=10, quantity_posted=10, unit='kg', unit_cost=100)
+        session = self.client.session
+        session['user_id'] = self.admin.pk
+        session['user_type'] = 'admin'
+        session.save()
+
+    def test_valued_return_reduces_stock_purchase_balance_and_vendor_payable(self):
+        movement = record_movement(
+            item=self.item, movement_type=StockMovement.RETURN_VENDOR, quantity=2,
+            vendor=self.vendor, purchase_order=self.po, purchase_cost_amount=200,
+            reference_number='DN-001', created_by='returns-admin',
+        )
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.quantity, Decimal('8'))
+        self.assertEqual(movement.quantity_out, Decimal('2'))
+        self.assertEqual(self.po.return_total, Decimal('200'))
+        self.assertEqual(self.po.net_purchase_amount, Decimal('800'))
+        self.assertEqual(self.po.balance_amount, Decimal('800'))
+        ledger = self.client.get(reverse('vendor_ledger', args=[self.vendor.pk]))
+        self.assertContains(ledger, 'Purchase Return')
+        self.assertContains(ledger, 'DN-001')
+        self.assertContains(ledger, 'Return Rice')
+        dashboard = self.client.get(reverse('inventory_dashboard'))
+        self.assertContains(dashboard, '800.00')
+
+    def test_return_entry_view_calculates_value_from_quantity_and_unit_cost(self):
+        response = self.client.post(reverse('movement_add_for_item', args=[self.item.pk]), {
+            'movement_type': StockMovement.RETURN_VENDOR, 'quantity': '3',
+            'vendor': self.vendor.pk, 'purchase_order': self.po.pk, 'unit_cost': '100',
+            'reference_number': 'DN-002', 'notes': 'Damaged bags returned',
+        })
+        self.assertRedirects(response, reverse('movement_list'))
+        movement = StockMovement.objects.get(reference_number='DN-002')
+        self.assertEqual(movement.purchase_cost_amount, Decimal('300'))
+        self.assertEqual(self.po.balance_amount, Decimal('700'))
+
+    def test_return_without_vendor_or_value_is_rejected_atomically(self):
+        with self.assertRaises(ValidationError):
+            record_movement(item=self.item, movement_type=StockMovement.RETURN_VENDOR, quantity=1)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.quantity, Decimal('10'))
+        self.assertFalse(StockMovement.objects.exists())

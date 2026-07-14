@@ -43,9 +43,16 @@ def inventory_dashboard(request):
     if response: return response
     user, kind = auth
     stock = Inventory.objects.all()
-    active_orders = PurchaseOrder.objects.exclude(status='cancelled').prefetch_related('items', 'payments')
-    payables = sum((po.payable_amount for po in active_orders), Decimal('0'))
-    advances = sum((po.advance_amount for po in active_orders), Decimal('0'))
+    vendors_for_accounts = Vendor.objects.prefetch_related('purchase_orders__items', 'purchase_orders__payments', 'stock_returns')
+    vendor_positions = []
+    for account_vendor in vendors_for_accounts:
+        account_orders = [po for po in account_vendor.purchase_orders.all() if po.status != 'cancelled']
+        gross = sum((po.total_amount for po in account_orders), Decimal('0'))
+        returns = sum((movement.purchase_cost_amount for movement in account_vendor.stock_returns.all()), Decimal('0'))
+        paid = sum((po.total_paid for po in account_orders), Decimal('0'))
+        vendor_positions.append(gross - returns - paid)
+    payables = sum((max(position, Decimal('0')) for position in vendor_positions), Decimal('0'))
+    advances = sum((max(-position, Decimal('0')) for position in vendor_positions), Decimal('0'))
     return render(request, 'Inventory/dashboard.html', _context(user, kind,
         item_count=stock.count(), low_stock_count=stock.filter(quantity__lte=F('min_quantity')).count(),
         active_vendor_count=Vendor.objects.filter(is_active=True).count(), open_po_count=PurchaseOrder.objects.exclude(status__in=['received', 'cancelled']).count(),
@@ -128,12 +135,13 @@ def vendor_list(request):
     auth, response = _guard(request)
     if response: return response
     user, kind = auth
-    vendors = list(Vendor.objects.prefetch_related('purchase_orders__items', 'purchase_orders__payments'))
+    vendors = list(Vendor.objects.prefetch_related('purchase_orders__items', 'purchase_orders__payments', 'stock_returns'))
     for vendor in vendors:
         orders = [po for po in vendor.purchase_orders.all() if po.status != 'cancelled']
         vendor.total_purchases = sum((po.total_amount for po in orders), Decimal('0'))
+        vendor.total_returns = sum((movement.purchase_cost_amount for movement in vendor.stock_returns.all()), Decimal('0'))
         vendor.total_paid = sum((po.total_paid for po in orders), Decimal('0'))
-        vendor.balance = vendor.total_purchases - vendor.total_paid
+        vendor.balance = vendor.total_purchases - vendor.total_returns - vendor.total_paid
         vendor.advance = max(-vendor.balance, Decimal('0'))
     return render(request, 'Inventory/vendor_list.html', _context(user, kind, vendors=vendors))
 
@@ -144,21 +152,28 @@ def vendor_ledger(request, pk):
     user, kind = auth
     vendor = get_object_or_404(Vendor, pk=pk)
     orders = vendor.purchase_orders.exclude(status='cancelled').prefetch_related('items', 'payments')
+    returns = vendor.stock_returns.filter(movement_type=StockMovement.RETURN_VENDOR).select_related('purchase_order', 'inventory_item')
     events = []
     for po in orders:
         events.append({'date': po.purchase_date, 'sort': 0, 'type': 'Purchase', 'reference': po.number, 'debit': po.total_amount, 'credit': Decimal('0'), 'po': po})
         for payment in po.payments.all():
-            events.append({'date': payment.payment_date, 'sort': 1, 'type': 'Payment', 'reference': payment.reference_number or po.number, 'debit': Decimal('0'), 'credit': payment.amount, 'po': po, 'payment': payment})
-    events.sort(key=lambda event: (event['date'], event['sort'], event.get('payment').id if event.get('payment') else event['po'].id))
+            events.append({'date': payment.payment_date, 'sort': 2, 'type': 'Payment', 'reference': payment.reference_number or po.number, 'debit': Decimal('0'), 'credit': payment.amount, 'po': po, 'payment': payment})
+    for stock_return in returns:
+        events.append({'date': timezone.localtime(stock_return.movement_at).date(), 'sort': 1, 'type': 'Purchase Return',
+                       'reference': stock_return.reference_number or f'RETURN-{stock_return.pk}', 'debit': Decimal('0'),
+                       'credit': stock_return.purchase_cost_amount, 'po': stock_return.purchase_order,
+                       'return': stock_return, 'description': f'{stock_return.inventory_item.item_name} - {stock_return.quantity_out} {stock_return.unit}'})
+    events.sort(key=lambda event: (event['date'], event['sort'], event.get('payment').id if event.get('payment') else event.get('return').id if event.get('return') else event['po'].id))
     running = Decimal('0')
     for event in events:
         running += event['debit'] - event['credit']
         event['balance'] = running
+    total_purchases = sum((po.total_amount for po in orders), Decimal('0'))
+    total_returns = sum((stock_return.purchase_cost_amount for stock_return in returns), Decimal('0'))
     return render(request, 'Inventory/vendor_ledger.html', _context(
-        user, kind, vendor=vendor, entries=events, total_purchases=sum((po.total_amount for po in orders), Decimal('0')),
-        total_paid=sum((po.total_paid for po in orders), Decimal('0')), balance=running,
+        user, kind, vendor=vendor, entries=events, total_purchases=total_purchases, total_returns=total_returns,
+        net_purchases=total_purchases - total_returns, total_paid=sum((po.total_paid for po in orders), Decimal('0')), balance=running,
     ))
-
 
 def vendor_edit(request, pk=None):
     auth, response = _guard(request)
@@ -246,7 +261,7 @@ def purchase_payment_add(request, pk):
         payment.purchase_order = po
         payment.created_by = user.username
         payment.save()
-        messages.success(request, f'Payment of ₹{payment.amount:.2f} recorded for {po.number}.')
+        messages.success(request, f'Payment of â‚¹{payment.amount:.2f} recorded for {po.number}.')
         return redirect('purchase_order_detail', pk=po.pk)
     return render(request, 'Inventory/payment_form.html', _context(user, kind, purchase_order=po, form=form))
 
@@ -277,7 +292,7 @@ def purchase_order_receive(request, pk):
 def movement_list(request):
     auth, response = _guard(request)
     if response: return response
-    user, kind = auth; movements = StockMovement.objects.select_related('inventory_item')
+    user, kind = auth; movements = StockMovement.objects.select_related('inventory_item', 'vendor', 'purchase_order')
     if request.GET.get('item'): movements = movements.filter(inventory_item_id=request.GET['item'])
     return render(request, 'Inventory/movement_list.html', _context(user, kind, movements=movements, items=Inventory.objects.all()))
 
@@ -290,7 +305,16 @@ def movement_create(request, item_pk=None):
     if request.method == 'POST' and form.is_valid():
         item = item or get_object_or_404(Inventory, pk=request.POST.get('inventory_item'))
         try:
-            record_movement(item=item, created_by=user.username, reference_type='manual_entry', **form.cleaned_data)
+            movement_data = form.cleaned_data.copy()
+            unit_cost = movement_data.pop('unit_cost', None)
+            if movement_data['movement_type'] == StockMovement.RETURN_VENDOR:
+                movement_data['purchase_cost_amount'] = movement_data['quantity'] * unit_cost
+                movement_data['reference_type'] = 'vendor_return'
+            else:
+                movement_data.pop('vendor', None)
+                movement_data.pop('purchase_order', None)
+                movement_data['reference_type'] = 'manual_entry'
+            record_movement(item=item, created_by=user.username, **movement_data)
             messages.success(request, 'Stock movement recorded.'); return redirect('movement_list')
         except ValidationError as exc: form.add_error('quantity', '; '.join(exc.messages))
     return render(request, 'Inventory/movement_form.html', _context(user, kind, form=form, item=item, items=Inventory.objects.all()))
@@ -309,12 +333,14 @@ def daily_inventory_report(request):
         purchased = day_moves.filter(movement_type=StockMovement.PURCHASE_RECEIVED).aggregate(v=Coalesce(Sum('quantity_in'), Decimal('0')))['v']
         issued = day_moves.filter(movement_type=StockMovement.KITCHEN_ISSUE).aggregate(v=Coalesce(Sum('quantity_out'), Decimal('0')))['v']
         wastage = day_moves.filter(movement_type=StockMovement.WASTAGE).aggregate(v=Coalesce(Sum('quantity_out'), Decimal('0')))['v']
+        returned = day_moves.filter(movement_type=StockMovement.RETURN_VENDOR).aggregate(v=Coalesce(Sum('quantity_out'), Decimal('0')))['v']
         net = day_moves.aggregate(v=Coalesce(Sum(F('quantity_in') - F('quantity_out')), Decimal('0'), output_field=DecimalField()))['v']
         closing = day_moves.order_by('-movement_at', '-id').values_list('balance_after', flat=True).first()
         if closing is None: closing = item.quantity
-        if day_moves.exists(): rows.append({'item': item, 'opening': closing - net, 'purchased': purchased, 'issued': issued, 'wastage': wastage, 'closing': closing})
+        if day_moves.exists(): rows.append({'item': item, 'opening': closing - net, 'purchased': purchased, 'issued': issued, 'wastage': wastage, 'returned': returned, 'closing': closing})
     purchase_paid = PurchasePayment.objects.filter(payment_date=selected).aggregate(v=Coalesce(Sum('amount'), Decimal('0')))['v']
     sale_value = Payments.objects.filter(payment_status='Completed', order_no__in=Orders.objects.filter(order_date__date=selected).values('order_no')).aggregate(v=Coalesce(Sum('total_amount'), Decimal('0')))['v']
     totals = {'purchase_paid': purchase_paid, 'sale_value': sale_value, 'difference': sale_value - purchase_paid,
-              'issued': sum((r['issued'] for r in rows), Decimal('0')), 'wastage': sum((r['wastage'] for r in rows), Decimal('0'))}
+              'issued': sum((r['issued'] for r in rows), Decimal('0')), 'wastage': sum((r['wastage'] for r in rows), Decimal('0')),
+              'returned': sum((r['returned'] for r in rows), Decimal('0'))}
     return render(request, 'Inventory/daily_report.html', _context(user, kind, selected_date=selected, rows=rows, totals=totals))

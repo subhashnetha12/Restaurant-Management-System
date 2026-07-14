@@ -85,5 +85,25 @@ class MovementForm(forms.Form):
         StockMovement.KITCHEN_ISSUE, StockMovement.WASTAGE, StockMovement.RETURN_VENDOR,
     )])
     quantity = forms.DecimalField(max_digits=12, decimal_places=3, min_value=0.001)
+    vendor = forms.ModelChoiceField(queryset=Vendor.objects.filter(is_active=True), required=False, help_text='Required for Return to Vendor.')
+    purchase_order = forms.ModelChoiceField(queryset=PurchaseOrder.objects.none(), required=False, help_text='Optional: links the credit to the original purchase.')
+    unit_cost = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0.01, required=False, label='Return unit cost (?)', help_text='Required for Return to Vendor; used to calculate the ledger credit.')
     reference_number = forms.CharField(max_length=100, required=False)
     notes = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['purchase_order'].queryset = PurchaseOrder.objects.exclude(status='cancelled').select_related('vendor')
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('movement_type') == StockMovement.RETURN_VENDOR:
+            if not cleaned.get('vendor'):
+                self.add_error('vendor', 'Select the vendor receiving the returned stock.')
+            if not cleaned.get('unit_cost'):
+                self.add_error('unit_cost', 'Enter the return unit cost for the vendor credit.')
+            po = cleaned.get('purchase_order')
+            vendor = cleaned.get('vendor')
+            if po and vendor and po.vendor_id != vendor.pk:
+                self.add_error('purchase_order', 'This purchase order belongs to another vendor.')
+        return cleaned
